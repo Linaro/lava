@@ -7,6 +7,7 @@
 
 import asyncio
 import json
+import os
 import struct
 
 import pytest
@@ -115,3 +116,29 @@ class TestHandleRequest:
         writer.write.assert_not_called()
         writer.close.assert_called_once()
         share_device_with_container.assert_not_called()
+
+
+class TestServerStart:
+    def start_with_env(self, mocker, monkeypatch, listen_pid):
+        monkeypatch.setenv("LISTEN_FDS", "1")
+        if listen_pid is None:
+            monkeypatch.delenv("LISTEN_PID", raising=False)
+        else:
+            monkeypatch.setenv("LISTEN_PID", listen_pid)
+        fromfd = mocker.patch("socket.fromfd")
+        start = mocker.patch("asyncio.start_unix_server", new_callable=mocker.AsyncMock)
+        start.return_value.__aenter__ = mocker.AsyncMock()
+        start.return_value.__aexit__ = mocker.AsyncMock()
+        asyncio.run(ServerWrapper("/tmp/sock").start())
+        return start, fromfd
+
+    def test_listen_pid_missing_falls_back_to_path_socket(self, mocker, monkeypatch):
+        start, fromfd = self.start_with_env(mocker, monkeypatch, None)
+
+        fromfd.assert_not_called()
+        assert start.call_args.kwargs == {"path": "/tmp/sock"}
+
+    def test_listen_pid_match_uses_sock_kwarg(self, mocker, monkeypatch):
+        start, fromfd = self.start_with_env(mocker, monkeypatch, str(os.getpid()))
+
+        assert start.call_args.kwargs == {"sock": fromfd.return_value}
