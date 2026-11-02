@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "django.contrib.sites",  # FIXME: should not be needed anymore
+    "django.contrib.postgres",
 ]
 
 # List of people who get broken link notifications
