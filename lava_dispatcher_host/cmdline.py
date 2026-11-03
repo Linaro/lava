@@ -15,16 +15,16 @@ from typing import TYPE_CHECKING
 from lava_common.constants import UDEV_RULE_FILENAME
 
 if TYPE_CHECKING:
-    from typing import TextIO
+    from typing import Any, TextIO
 
 
-def handle_rules_show(options):
+def handle_rules_show(options: Any) -> None:
     from lava_dispatcher_host.udev import get_udev_rules
 
     print(get_udev_rules())
 
 
-def handle_rules_install(options):
+def handle_rules_install(options: Any) -> None:
     from lava_dispatcher_host.udev import get_udev_rules
 
     dest = UDEV_RULE_FILENAME
@@ -45,7 +45,7 @@ def handle_rules_install(options):
         subprocess.check_call(["udevadm", "control", "--reload-rules"])
 
 
-def handle_devices_share(options):
+def handle_devices_share(options: Any) -> None:
     if options.remote:
         from lava_dispatcher_host.client import Client
 
@@ -74,7 +74,7 @@ def handle_devices_share(options):
         share_device_with_container(options)
 
 
-def handle_devices_map(options):
+def handle_devices_map(options: Any) -> None:
     from lava_common.device_mappings import add_device_container_mapping
 
     container = options.container
@@ -87,13 +87,13 @@ def handle_devices_map(options):
     add_device_container_mapping(job_id, device_info, container, container_type)
 
 
-def handle_devices_unmap(_):
+def handle_devices_unmap(_: Any) -> None:
     from lava_common.device_mappings import remove_device_container_mappings
 
     remove_device_container_mappings("0")
 
 
-def main(argv):
+def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog=argv[0])
     parser.set_defaults(usage_from=parser)
     parser.set_defaults(func=None)
@@ -182,7 +182,8 @@ def main(argv):
     if options.func:
         debug_log_file: TextIO | None = None
         if options.debug_log:
-            debug_log_file = options.debug_log.open(mode="at")
+            debug_log_path: Path = options.debug_log
+            debug_log_file = debug_log_path.open(mode="at")
             if not sys.stderr.isatty():
                 sys.stderr = debug_log_file
             timestamp = time.strftime("%c", time.gmtime())
