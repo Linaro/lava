@@ -467,6 +467,38 @@ with the actual values at runtime.
 | `{DEVICE_INFO}` | YAML dump of [`device_info`](#device_info) |
 | `{STATIC_INFO}` | YAML dump of [`static_info`](#static_info) |
 
+The commands are executed from the directory where the images were downloaded,
+and the `{UPPER_CASE_IMAGE_KEY}` placeholders are paths relative to that
+directory.
+
+The commands are not executed in a shell: pipes, redirections or variables are
+not interpreted. Use `sh -c "..."` when a shell is needed.
+
+!!! note
+    The device dictionary is rendered as YAML: do not mix single and double
+    quotes in the same command.
+
+##### Using docker
+
+To run the flashing tool inside a docker container, call `docker run` from the
+commands. Mount the current directory inside the container to give access to
+the downloaded images:
+
+```jinja
+{% set flasher_deploy_commands = [
+        'sh -c "docker run --rm --volume $PWD:$PWD --workdir $PWD --device /dev/ttyACM0 example/flash-tools:1.0 flash --port /dev/ttyACM0 {RECOVERY_IMAGE}"',
+    ]
+%}
+```
+
+The docker image is defined by the device dictionary and cannot be changed
+from the job definition.
+
+!!! note
+    When the worker runs inside a container, the docker daemon resolves the
+    mounted path on the host. The download directory must be available on the
+    host at the same path.
+
 ### JLink
 
 #### board_id
