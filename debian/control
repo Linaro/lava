@@ -119,6 +119,7 @@ Depends: gunicorn,
          libjs-jquery,
          libjs-jquery-flot,
          libjs-jquery-typeahead,
+         python3-django (>= 3:5.2),
          systemd-sysv,
          ${misc:Depends},
          ${python3:Depends}
