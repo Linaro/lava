@@ -295,11 +295,25 @@ class TestTemplates(BaseTemplateTest):
 
     def test_base_stm_mcu_timeout_override(self):
         data = """{% extends 'base-stm-mcu.jinja2' %}
-{% set action_timeout_power_off = 10 %}"""
+{% set action_timeout_power_off = 5 %}
+{% set action_timeout_reset_device = 15 %}
+{% set action_timeout_pdu_reboot = 25 %}"""
         template_dict = self.render_device_dictionary_from_text(data)
-        self.assertEqual(
-            template_dict["timeouts"]["actions"]["power-off"], {"seconds": 10}
-        )
+        timeouts = template_dict["timeouts"]["actions"]
+        self.assertEqual(timeouts["power-off"], {"seconds": 5})
+        self.assertEqual(timeouts["reset-device"], {"seconds": 15})
+        self.assertEqual(timeouts["pdu-reboot"], {"seconds": 25})
+
+    def test_stm32l562e_dk_base_timeouts(self):
+        # a wrong extends falls back to the base.jinja2 timeouts (10/30/30)
+        data = """{% extends 'stm32l562e-dk.jinja2' %}
+{% set flasher_deploy_commands = ['flash {BINARY}'] %}"""
+        template_dict = self.render_device_dictionary_from_text(data)
+        self.assertEqual(template_dict["constants"]["kernel-start-message"], "")
+        timeouts = template_dict["timeouts"]["actions"]
+        self.assertEqual(timeouts["power-off"], {"seconds": 35})
+        self.assertEqual(timeouts["reset-device"], {"seconds": 60})
+        self.assertEqual(timeouts["pdu-reboot"], {"seconds": 60})
 
     def test_depthcharge_template(self):
         data = """\
