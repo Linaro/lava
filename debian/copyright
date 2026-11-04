@@ -1,9 +1,23 @@
-Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: lava
 Source: https://gitlab.com/lava/lava
 
 Files: *
-Copyright: 2010-2019, Linaro Limited
+Copyright: 2010-2026 Linaro Limited
+           2016-2026 Collabora Limited
+           2017 The Linux Foundation
+           2019-2026 NXP
+           2019-2021 Arm Limited
+           2019 BayLibre
+           2019 Garz & Fricke GmbH
+           2019 Pengutronix e.K.
+           2026 Qualcomm Technologies, Inc. and/or its subsidiaries.
+           2026 LAVA contributors
+License: GPL-2.0+
+
+Files: lava_server/debian_sso.py
+Copyright: 2013 The Distro Tracker Developers
+           2016 Neil Williams
 License: GPL-2.0+
 
 Files: setup.py
@@ -13,39 +27,123 @@ Files: setup.py
  share/postinst.py
  share/requires.py
  share/validate_devices.py
+ doc/v2/examples/source/zmq_client.py
 Copyright: 2010-2019, Linaro Limited
 License: GPL-3.0+
 
+Files: doc/v2/examples/templates/templating.py
+Copyright: 2018 Linaro Limited
+License: BSD-3-clause
+
 Files: debian/*
 Copyright: 2013-2018 Neil Williams <codehelp@debian.org>
+           2026 Qualcomm Technologies, Inc. and/or its subsidiaries.
 License: GPL-2.0+
 
-Files: lava_scheduler_app/static/lava_scheduler_app/js/*
+Files: lava_results_app/static/lava_results_app/js/jquery.flot.js
+ lava_results_app/static/lava_results_app/js/jquery.flot.canvas.js
+ lava_results_app/static/lava_results_app/js/jquery.flot.time.js
+ lava_scheduler_app/static/lava_scheduler_app/js/jquery.flot.js
+Copyright: 2007-2013 IOLA and Ole Laursen
+License: Expat
+
+Files: lava_results_app/static/lava_results_app/js/jquery.flot.navigate.js
+Copyright: 2007-2014 IOLA and Ole Laursen
+           2008 Three Dub Media
+           2011 Brandon Aaron
+License: Expat
+
+Files: lava_results_app/static/lava_results_app/js/jquery.flot.axislabels.js
+Copyright: 2010 Xuan Luo
+License: Expat
+Comment: Originally released under GPL-3, re-released by the author
+ under the Expat (MIT) license in April 2012.
+
+Files: lava_results_app/static/lava_results_app/js/jquery.flot.labels.js
+Copyright: 2012 Matt Burland
+License: Expat
+
+Files: lava_results_app/static/lava_results_app/js/jquery.flot.dashes.js
+Copyright: 2007-2009 IOLA and Ole Laursen
+           2010 Michael Hixson
+License: Expat
+Comment: Posted by Michael Hixson to flot issue #140 on 2010-06-29
+ (https://github.com/flot/flot/issues/140; migrated thread, original
+ posting date quoted from the tracker). The file carries no notice,
+ and the author did not state a license. He described it as the flot
+ core line-drawing code with a few lines added, so the bulk is derived
+ from flot, which is Expat licensed. Expat is asserted for the whole
+ file on that basis; Hixson's added lines are not separately licensed.
+
+Files: lava_scheduler_app/static/lava_scheduler_app/js/jquery-linedtextarea.js
  lava_scheduler_app/static/lava_scheduler_app/css/jquery-linedtextarea.css
- lava_results_app/static/lava_results_app/js/jquery.flot.axislabels.js
- lava_results_app/static/lava_results_app/js/jquery.flot.labels.js
-Copyright: 2014 Jörn Zaefferer
-           2010 Alan Williamson
-           2007-2011 Ariel Flesler - aflesler(at)gmail(dot)com
-           2004-2010 Alex Gorbatchev
-           2010 Klaus Hartl (stilbuero.de)
-           2011 Zygmunt Krynicki
-           2014 jQuery Foundation and other contributors
-           2010 Xuan Luo
-           2007-2013 IOLA and Ole Laursen.
-           2012 Matt Burland
-           2008, Three Dub Media (http://threedubmedia.com)
-           2009, Stanislaus Madueke
-           2006 - 2008 Jörn Zaefferer
-           2010 - 2012 Andris Reinman, andris.reinman@gmail.com
-           2010 Xuan Luo.
-           2012 by Matt Burland
-License: MIT
+Copyright: 2010 Alan Williamson
+License: Expat
+
+Files: lava_scheduler_app/static/lava_scheduler_app/js/jquery.details.js
+Copyright: Mathias Bynens
+License: Expat
+Comment: Vendored copy is upstream v0.0.1 (project announced 2010-04-25);
+ it carries no notice. Upstream (https://github.com/mathiasbynens/jquery-details)
+ is dual-licensed MIT and GPL, like jQuery itself; the MIT (Expat) leg is
+ used here.
+
+Files: lava_server/static/lava_server/css/bootstrap-3.4.1.css
+ lava_server/static/lava_server/js/bootstrap-3.4.1.js
+Copyright: 2011-2019 Twitter, Inc.
+           Nicolas Gallagher and Jonathan Neal
+License: Expat
+Comment: bootstrap-3.4.1.css embeds normalize.css v3.0.3.
+
+Files: lava_server/static/lava_server/fonts/*
+Copyright: Jan Kovařík <https://glyphicons.com/>
+License: Expat
+Comment: Glyphicons Halflings ship as part of Bootstrap; upstream states
+ they are "released under the same license as Bootstrap" (see
+ https://web.archive.org/web/20130713042758/https://www.glyphicons.com/glyphicons-licenses/).
+ The fonts carry no notice themselves; this mirrors the stanza Debian
+ uses in twitter-bootstrap3.
+
+Files: lava_server/static/lava_server/js/jquery-3.6.1.js
+Copyright: OpenJS Foundation and other contributors
+License: Expat
+
+Files: lava_server/static/lava_server/js/jquery.typeahead.js
+ lava_server/static/lava_server/css/jquery.typeahead.css
+Copyright: 2016 RunningCoder.org
+License: Expat
+Comment: jquery.typeahead.css carries no notice; per upstream it is part
+ of the same Expat-licensed project as the paired jquery.typeahead.js
+ (http://www.runningcoder.org/jquerytypeahead/).
+
+Files: lava_server/static/lava_server/js/bootbox.js
+Copyright: 2011-2014 Nick Payne
+License: Expat
 
 Files: doc/v2/_static/default.css
-Copyright: 2009, Stanislaus Madueke
-           2007-2011 by the Sphinx team
-License: BSD-3-clause
+ doc/v2/_static/scrolls.css
+Copyright: 2007-2016 the Sphinx team
+License: BSD-2-clause
+
+License: BSD-2-clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+ .
+ Redistributions of source code must retain the above copyright notice, this
+ list of conditions and the following disclaimer.
+ Redistributions in binary form must reproduce the above copyright notice, this
+ list of conditions and the following disclaimer in the documentation and/or
+ other materials provided with the distribution.
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 License: BSD-3-clause
  Redistribution and use in source and binary forms, with or without
@@ -56,7 +154,7 @@ License: BSD-3-clause
  Redistributions in binary form must reproduce the above copyright notice, this
  list of conditions and the following disclaimer in the documentation and/or
  other materials provided with the distribution.
- Neither the name of the GoodCloud, LLC. nor the names of its contributors may
+ Neither the name of the copyright holder nor the names of its contributors may
  be used to endorse or promote products derived from this software without
  specific prior written permission.
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
@@ -85,9 +183,9 @@ License: GPL-3.0+
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  .
  On Debian systems, the complete text of the GNU General
- Public License version 2 can be found in "/usr/share/common-licenses/GPL-3".
+ Public License version 3 can be found in "/usr/share/common-licenses/GPL-3".
 
-License: MIT
+License: Expat
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
