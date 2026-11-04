@@ -15,6 +15,7 @@ set -x
 
 # run tests
 export LAVA_STATE_DIR=${TESTDIR}/tmp
-cp -r pytest.ini etc/ tests/ "${TESTDIR}"
+cp -r pyproject.toml setup.py etc/ tests/ "${TESTDIR}"
+cp --parents debian/control "${TESTDIR}"
 cd "${TESTDIR}"
 python3 -m pytest -k 'not test_device_types_show' "$@"
