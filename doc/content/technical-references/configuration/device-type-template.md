@@ -31,14 +31,18 @@ ones provided by LAVA.
 Every device-type template should inherit from `base.jinja2` which contains
 many default structures.
 
-For simplicity multiple base templates are provided for the most common bootloaders:
+For simplicity multiple base templates are provided for the most
+common bootloaders and MCU boards:
 
 * `base-barebox.jinja2`
 * `base-depthcharge.jinja2`
 * `base-edk2.jinja2`
 * `base-fastboot.jinja2`
+* `base-flasher.jinja2`
 * `base-grub.jinja2`
 * `base-nxp-mcu.jinja2`
+* `base-qdl.jinja2`
+* `base-stm-mcu.jinja2`
 * `base-uboot.jinja2`
 
 ## Device types
