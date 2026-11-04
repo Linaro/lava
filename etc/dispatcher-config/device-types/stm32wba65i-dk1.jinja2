@@ -1,12 +1,7 @@
 {# device_type: 'stm32wba65i-dk1' #}
+{% extends 'base-stm-mcu.jinja2' %}
 
-{% set action_timeout_power_off = action_timeout_power_off | default(35) %}
-{% set action_timeout_reset_device = action_timeout_reset_device | default(60) %}
-{% set action_timeout_pdu_reboot = action_timeout_pdu_reboot | default(60) %}
-{% set kernel_start_message = '' %}
 {% set device_info = device_info|default([{'board_id': board_id}]) %}
-
-{% extends 'base.jinja2' %}
 
 {% block body %}
 {# ID_SERIAL_SHORT #}
