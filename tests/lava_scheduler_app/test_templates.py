@@ -231,6 +231,7 @@ class TestTemplates(BaseTemplateTest):
             "base-depthcharge",
             "base-nxp-mcu",
             "base-qdl",
+            "base-stm-mcu",
             "base-uboot",
             "cy8ckit-064s0s2-4343w",
             "lpcxpresso55s69",
@@ -275,6 +276,30 @@ class TestTemplates(BaseTemplateTest):
 {% set connection_command = 'telnet localhost 2000' %}"""
         template_dict = self.render_device_dictionary_from_text(data)
         self.assertIsNone(template_dict["actions"]["deploy"]["methods"])
+
+    def test_base_stm_mcu(self):
+        data = """{% extends 'base-stm-mcu.jinja2' %}
+{% set connection_command = 'telnet localhost 2000' %}
+{% set flasher_deploy_commands = ['flash {TARBALL}'] %}"""
+        template_dict = self.render_device_dictionary_from_text(data)
+        self.assertEqual(
+            template_dict["actions"]["deploy"]["methods"]["flasher"]["commands"],
+            ["flash {TARBALL}"],
+        )
+        self.assertEqual(list(template_dict["actions"]["boot"]["methods"]), ["minimal"])
+        self.assertEqual(template_dict["constants"]["kernel-start-message"], "")
+        timeouts = template_dict["timeouts"]["actions"]
+        self.assertEqual(timeouts["power-off"], {"seconds": 35})
+        self.assertEqual(timeouts["reset-device"], {"seconds": 60})
+        self.assertEqual(timeouts["pdu-reboot"], {"seconds": 60})
+
+    def test_base_stm_mcu_timeout_override(self):
+        data = """{% extends 'base-stm-mcu.jinja2' %}
+{% set action_timeout_power_off = 10 %}"""
+        template_dict = self.render_device_dictionary_from_text(data)
+        self.assertEqual(
+            template_dict["timeouts"]["actions"]["power-off"], {"seconds": 10}
+        )
 
     def test_depthcharge_template(self):
         data = """\

@@ -1,0 +1,8 @@
+{# device_type: STM32 MCU base type #}
+
+{% extends 'base-flasher.jinja2' %}
+
+{% set kernel_start_message = '' %}
+{% set action_timeout_power_off = action_timeout_power_off | default(35) %}
+{% set action_timeout_reset_device = action_timeout_reset_device | default(60) %}
+{% set action_timeout_pdu_reboot = action_timeout_pdu_reboot | default(60) %}
