@@ -36,7 +36,7 @@ class CommandAction(Action):
     def __init__(self, job: Job):
         super().__init__(job)
         self.section = "command"
-        self.cmd: dict[str, str | list[str]] = {}
+        self.cmd: dict[str, str | list[str] | list[list[str]]] = {}
         self.ran = False
 
     def validate(self) -> None:
@@ -58,7 +58,7 @@ class CommandAction(Action):
                     )
                 return
             if cmd_name == "stop_test_services":
-                cmd_list: list[str] | None = self.get_namespace_data(
+                cmd_list: list[list[str]] | None = self.get_namespace_data(
                     action="lava-test-service", label="stop-services", key="cmd-list"
                 )
                 if cmd_list:
@@ -77,9 +77,9 @@ class CommandAction(Action):
             self.errors_add("Command '%s' not defined for this device" % cmd_name)
             return
 
-        user_commands: dict[str, dict[str, str | list[str]]] | None = (
-            self.job.device.get("commands", {}).get("users")
-        )
+        user_commands: (
+            dict[str, dict[str, str | list[str] | list[list[str]]]] | None
+        ) = self.job.device.get("commands", {}).get("users")
         if not user_commands:
             self.errors_add("Device has no configured user commands")
             return
@@ -98,7 +98,7 @@ class CommandAction(Action):
             )
 
     @staticmethod
-    def is_command(cmd: str | list[str] | None) -> bool:
+    def is_command(cmd: str | list[str] | list[list[str]] | None) -> bool:
         # An empty command (or a list with an empty element) would silently run
         # nothing, so reject it here rather than at run time.
         if isinstance(cmd, str):

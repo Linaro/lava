@@ -143,7 +143,7 @@ class TestServiceAction(Action):
             "down",
         ]
         # For stopping services via command: stop_test_services.
-        cmd_list = self.get_namespace_data(
+        cmd_list: list[list[str]] | None = self.get_namespace_data(
             action=self.name, label="stop-services", key="cmd-list"
         )
         if cmd_list:
@@ -208,7 +208,7 @@ class TestServiceAction(Action):
                 "commit": commit_id,
             }
         elif repo_from == "url":
-            fpath = self.get_namespace_data(
+            fpath: str | None = self.get_namespace_data(
                 action="download-action", label="file", key=self.service_name
             )
             if fpath is None:
