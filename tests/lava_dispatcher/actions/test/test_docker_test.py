@@ -11,7 +11,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from lava_dispatcher.actions.test.docker import DockerTestShell
-from lava_dispatcher.actions.test.multinode import MultinodeMixin
+from lava_dispatcher.actions.test.multinode import MultinodeTestAction
 from lava_dispatcher.actions.test.shell import TestShellAction
 from tests.lava_dispatcher.test_basic import Factory
 
@@ -227,10 +227,10 @@ def test_docker_test_shell_validate(action):
 def test_multinode_docker_test_shell(action, multinode_action):
     # docker test shell job without multinode
     assert isinstance(action.pipeline.actions[2], TestShellAction)
-    assert not isinstance(action.pipeline.actions[2], MultinodeMixin)
+    assert not isinstance(action.pipeline.actions[2], MultinodeTestAction)
 
     # docker test shell job with multinode
-    assert isinstance(multinode_action.pipeline.actions[2], MultinodeMixin)
+    assert isinstance(multinode_action.pipeline.actions[2], MultinodeTestAction)
 
 
 def test_docker_test_shell_run(first_test_action, mocker):

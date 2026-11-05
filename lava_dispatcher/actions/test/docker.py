@@ -14,7 +14,7 @@ from lava_common.device_mappings import remove_device_container_mappings
 from lava_common.exceptions import LAVATimeoutError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.overlay import CreateOverlay
-from lava_dispatcher.actions.test.multinode import MultinodeMixin
+from lava_dispatcher.actions.test.multinode import MultinodeTestAction
 from lava_dispatcher.actions.test.shell import TestShellAction
 from lava_dispatcher.connections.serial import DisconnectDevice
 from lava_dispatcher.power import ReadFeedback
@@ -233,7 +233,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         return connection
 
 
-class MultinodeDockerTestShell(MultinodeMixin, DockerTestShell):
+class MultinodeDockerTestShell(MultinodeTestAction, DockerTestShell):
     name = "lava-multinode-docker-test-shell"
     description = "Runs multinode lava-test-shell in a docker container"
     summary = "Runs multinode lava-test-shell in a docker container"

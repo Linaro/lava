@@ -26,7 +26,7 @@ from lava_dispatcher.connection import SignalMatch
 from lava_dispatcher.logical import RetryAction
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, ClassVar
 
     from lava_dispatcher.connection import Protocol
     from lava_dispatcher.job import Job
@@ -133,7 +133,7 @@ class TestShellAction(ReportMixin):
     name = "lava-test-shell"
     description = "Executing lava-test-runner"
     summary = "Lava Test Shell"
-    timeout_exception = LAVATimeoutError
+    timeout_exception: ClassVar[type[Exception]] = LAVATimeoutError
 
     def __init__(self, job: Job):
         super().__init__(job)

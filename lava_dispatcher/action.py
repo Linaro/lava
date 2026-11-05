@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator, KeysView
     from typing import Any, ClassVar, TypeVar
 
+    from .connection import Protocol
     from .job import Job
     from .shell import ShellSession
 
@@ -367,7 +368,7 @@ class Action:
         # unless the strategy or the job parameters change this, do not retry
         self.max_retries: int = 1
         # list of protocol objects supported by this action, full list in job.protocols
-        self.protocols: list[object] = []
+        self.protocols: list[Protocol] = []
         self.connection_timeout = Timeout(
             self.name, self, exception=self.timeout_exception
         )

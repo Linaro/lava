@@ -9,14 +9,17 @@ import json
 import re
 from typing import TYPE_CHECKING
 
-from lava_common.exceptions import MultinodeProtocolTimeoutError, TestError
+from lava_common.exceptions import LAVABug, MultinodeProtocolTimeoutError, TestError
 from lava_common.timeout import Timeout
-from lava_dispatcher.action import Action
 from lava_dispatcher.actions.test.shell import TestShellAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 
 if TYPE_CHECKING:
+    from typing import Any
+
+    from lava_dispatcher.connection import Protocol
     from lava_dispatcher.job import Job
+    from lava_dispatcher.shell import ShellSession
 
 # TODO: This is a workaround allowing to run multinode jobs with "monitors"
 # and "interactive" test actions - simple scenarios, without cross-device
@@ -29,14 +32,19 @@ if TYPE_CHECKING:
 # for those test actions ahead of heavy refactors above.
 
 
-class MultinodeMixin(Action):
+class MultinodeTestAction(TestShellAction):
+    name = "multinode-test"
+    description = "Executing lava-test-runner"
+    summary = "Multinode Lava Test Shell"
     timeout_exception = TestError
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.multinode_dict = {"multinode": r"<LAVA_MULTI_NODE> <LAVA_(\S+) ([^>]+)>"}
+        self.multinode_dict: dict[str, str] = {
+            "multinode": r"<LAVA_MULTI_NODE> <LAVA_(\S+) ([^>]+)>"
+        }
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         # MultinodeProtocol is required, others can be optional
         if MultinodeProtocol.name not in [
@@ -53,11 +61,11 @@ class MultinodeMixin(Action):
             self.parameters, character_delay=self.character_delay
         )
 
-    def _reset_patterns(self):
+    def _reset_patterns(self) -> None:
         super()._reset_patterns()
         self.patterns.update(self.multinode_dict)
 
-    def populate(self, parameters):
+    def populate(self, parameters: dict[str, Any]) -> None:
         """
         Select the appropriate protocol supported by this action from the list available from the job
         """
@@ -68,13 +76,16 @@ class MultinodeMixin(Action):
         ]
         self.signal_director = self.SignalDirector(self.job, self.protocols[0])
 
-    def check_patterns(self, event, test_connection):
+    def check_patterns(self, event: str, test_connection: ShellSession) -> bool:
         """
         Calls the parent check_patterns first, then checks for subclass pattern.
         """
         ret = super().check_patterns(event, test_connection)
         if event == "multinode":
-            name, params = test_connection.match.groups()
+            multinode_match = test_connection.match
+            if not isinstance(multinode_match, re.Match):
+                raise LAVABug(f"Expected re.Match got {multinode_match!r}")
+            name, params = multinode_match.groups()
             self.logger.debug("Received Multi_Node API <LAVA_%s>" % name)
             if name == "SEND":
                 params = re.split(r"\s+(?=\w+(?:=))", params)
@@ -102,12 +113,13 @@ class MultinodeMixin(Action):
         return ret
 
     class SignalDirector(TestShellAction.SignalDirector):
-        def __init__(self, job: Job, protocol):
-            super().__init__(job, protocol)
+        def __init__(self, job: Job, multinode_protocol: Protocol):
+            super().__init__(job, multinode_protocol)
             self.character_delay = 0
-            self.base_message = {}
+            self.base_message: dict[str, Any] = {}
+            self.multinode_protocol = multinode_protocol
 
-        def setup(self, parameters, character_delay=0):
+        def setup(self, parameters: dict[str, Any], character_delay: int = 0) -> None:
             """
             Retrieve the poll_timeout from the protocol parameters which are set after init.
             """
@@ -122,7 +134,7 @@ class MultinodeMixin(Action):
                 }
             self.character_delay = character_delay
 
-        def _on_send(self, *args):
+        def _on_send(self, *args: str) -> None:
             self.logger.debug("%s lava-send" % MultinodeProtocol.name)
             arg_length = len(args)
             if arg_length == 1:
@@ -140,16 +152,19 @@ class MultinodeMixin(Action):
 
             msg.update(self.base_message)
             self.logger.debug(str("Handling signal <LAVA_SEND %s>" % json.dumps(msg)))
-            reply = self.protocol(msg)
+            reply: str | None = self.multinode_protocol(msg)
             if reply == "nack":
                 # FIXME: does this deserve an automatic retry? Does it actually happen?
                 raise TestError("Coordinator was unable to accept LAVA_SEND")
 
-        def _on_sync(self, message_id):
+        def _on_sync(self, message_id: str) -> None:
+            if self.connection is None:
+                raise LAVABug("SignalDirector not assigned a connection")
+
             self.logger.debug("Handling signal <LAVA_SYNC %s>" % message_id)
             msg = {"request": "lava_sync", "messageID": message_id, "message": None}
             msg.update(self.base_message)
-            reply = self.protocol(msg)
+            reply: str | None = self.multinode_protocol(msg)
             if reply == "nack":
                 message_str = " nack"
             else:
@@ -159,15 +174,20 @@ class MultinodeMixin(Action):
             )
             self.connection.sendline("\n")
 
-        def _on_wait(self, message_id):
+        def _on_wait(self, message_id: str) -> None:
+            if self.connection is None:
+                raise LAVABug("SignalDirector not assigned a connection")
+
             self.logger.debug("Handling signal <LAVA_WAIT %s>" % message_id)
             msg = {"request": "lava_wait", "messageID": message_id, "message": None}
             msg.update(self.base_message)
-            reply = self.protocol(msg)
+            reply: str | dict[str, dict[str, str]] | None = self.multinode_protocol(msg)
             self.logger.debug("reply=%s" % reply)
             message_str = ""
             if reply == "nack":
                 message_str = " nack"
+            elif not isinstance(reply, dict):
+                raise LAVABug(f"Unexpected reply, expected dict got {reply!r}")
             else:
                 for target, messages in reply.items():
                     for key, value in messages.items():
@@ -177,14 +197,19 @@ class MultinodeMixin(Action):
             )
             self.connection.sendline("\n")
 
-        def _on_wait_all(self, message_id, role=None):
+        def _on_wait_all(self, message_id: str, role: str | None = None) -> None:
+            if self.connection is None:
+                raise LAVABug("SignalDirector not assigned a connection")
+
             self.logger.debug("Handling signal <LAVA_WAIT_ALL %s>" % message_id)
             msg = {"request": "lava_wait_all", "messageID": message_id, "role": role}
             msg.update(self.base_message)
-            reply = self.protocol(msg)
+            reply: str | dict[str, dict[str, str]] | None = self.multinode_protocol(msg)
             message_str = ""
             if reply == "nack":
                 message_str = " nack"
+            elif not isinstance(reply, dict):
+                raise LAVABug(f"Unexpected reply, expected dict got {reply!r}")
             else:
                 # the reply format is like this :
                 # "{target:{key1:value, key2:value2, key3:value3},
@@ -196,9 +221,3 @@ class MultinodeMixin(Action):
                 "<LAVA_WAIT_ALL_COMPLETE%s>" % message_str, delay=self.character_delay
             )
             self.connection.sendline("\n")
-
-
-class MultinodeTestAction(MultinodeMixin, TestShellAction):
-    name = "multinode-test"
-    description = "Executing lava-test-runner"
-    summary = "Multinode Lava Test Shell"
