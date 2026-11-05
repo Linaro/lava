@@ -270,7 +270,7 @@ def test_wait(mocker):
     docker = DockerRun("myimage")
     docker.name("foobar")
 
-    sleep = mocker.patch("time.sleep")
+    time_mock = mocker.patch("lava_dispatcher.utils.docker.time")
     inspect = mocker.patch(
         "subprocess.check_call",
         side_effect=[
@@ -287,7 +287,7 @@ def test_wait(mocker):
         stderr=subprocess.DEVNULL,
     )
     inspect.assert_has_calls([call, call])
-    sleep.assert_called_once()
+    time_mock.sleep.assert_called_once_with(1)
 
 
 def test_add_device_method_options():
