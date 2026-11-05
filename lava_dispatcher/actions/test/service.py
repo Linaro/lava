@@ -23,7 +23,10 @@ from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.vcs import GitHelper
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from lava_dispatcher.job import Job
+    from lava_dispatcher.shell import ShellSession
 
 
 @nottest
@@ -32,7 +35,7 @@ class TestServices(Action):
     description = "Executing lava-test-services"
     summary = "Lava Test Services"
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
 
         if self.job.device.get("parameters", {}).get("allow_test_services") is not True:
@@ -53,7 +56,7 @@ class TestServices(Action):
                     "Allowed: letters, digits, underscore and hyphen."
                 )
 
-    def populate(self, parameters):
+    def populate(self, parameters: dict[str, Any]) -> None:
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         services = parameters.pop("services")
         for service in services:
@@ -69,7 +72,7 @@ class TestServiceRetry(RetryAction):
     description = "Retry wrapper for lava-test-service"
     summary = "Retry support for Lava Test Service"
 
-    def populate(self, parameters):
+    def populate(self, parameters: dict[str, Any]) -> None:
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(TestServiceAction(self.job))
 
@@ -91,7 +94,7 @@ class TestServiceAction(Action):
         self.stop_cmd: list[str] = []
         self.started: bool = False
 
-    def populate(self, parameters):
+    def populate(self, parameters: dict[str, Any]) -> None:
         self.service_name = parameters["name"]
         self.download_dir = self.mkdtemp()
 
@@ -108,7 +111,7 @@ class TestServiceAction(Action):
                 )
             )
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
 
         which("docker")
@@ -162,7 +165,7 @@ class TestServiceAction(Action):
         if service := self.parameters.get("service"):
             self.start_cmd.append(service)
 
-    def _write_dot_env(self):
+    def _write_dot_env(self) -> None:
         envs = {
             **self.job.device.get("environment", {}),
             **self.job.parameters.get("environment", {}),
@@ -179,7 +182,9 @@ class TestServiceAction(Action):
                 self.logger.info(line)
                 f.write(f"{line}\n")
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
 
         self.results = {"name": self.service_name}
@@ -231,7 +236,11 @@ class TestServiceAction(Action):
 
         return connection
 
-    def cleanup(self, connection, max_end_time=None):
+    def cleanup(
+        self,
+        connection: ShellSession | None,
+        max_end_time: float | None = None,
+    ) -> None:
         super().cleanup(connection, max_end_time)
 
         if self.started:
