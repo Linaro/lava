@@ -55,3 +55,10 @@ See [qdl documentation](https://github.com/linux-msm/qdl/blob/master/README.md) 
 
 Path inside the downloaded tarball containing the `rawprogram` and `patch` files.
 The paths referenced by `rawprogram` and `patch` files are relative, so `qdl` must be ran from this directory.
+
+### skipblock
+
+Set to `true` to run `qdl` with `--skipblock=sha256`. `qdl` then asks the board
+for the sha256 digest of each region it is about to program, and skips writing
+the parts already on the flash. This needs `qdl` 2.7 or higher. Defaults to
+`false`.

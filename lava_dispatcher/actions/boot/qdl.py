@@ -107,6 +107,7 @@ class FlashQDLAction(Action):
             qdl_patch_path = self.parameters["patch"]
             qdl_storage = self.parameters.get("storage", None)
             qdl_debug = self.parameters.get("debug", False)
+            qdl_skipblock = self.parameters.get("skipblock", False)
             self.qcomflash_path = self.parameters.get("path", ".")
             self.base_command = [qdl_binary]
             # execute qdl to detect version
@@ -132,9 +133,13 @@ class FlashQDLAction(Action):
                     "qdl version %d.%d is too low, 2.0 or higher is required" % version
                 )
 
-            if version >= (2, 7):
-                # --skipblock=sha256 is available
-                self.base_command.append("--skipblock=sha256")
+            if qdl_skipblock:
+                if version >= (2, 7):
+                    self.base_command.append("--skipblock=sha256")
+                else:
+                    self.errors_add(
+                        "skipblock requires qdl 2.7 or higher, found %d.%d" % version
+                    )
 
             if qdl_debug:
                 self.base_command.extend(["--debug"])

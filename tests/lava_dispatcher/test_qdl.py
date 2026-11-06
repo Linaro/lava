@@ -6,6 +6,8 @@
 
 from unittest.mock import patch
 
+from voluptuous import Invalid
+
 from lava_common.exceptions import ConfigurationError, JobError
 from lava_dispatcher.actions.boot.qdl import FlashQDLAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
@@ -55,35 +57,62 @@ class TestQDLBootAction(LavaDispatcherTestCase):
     def test_qdl_job_qdl_1(self):
         self.assert_version_too_low("qdl version v1.0", "1.0")
 
-    def validate_qdl_job(self, version_output):
+    def validate_qdl_job(self, version_output, **parameters):
         """
         Create and validate a qdl job with "qdl --version" reporting
-        version_output. Returns the validated job.
+        version_output, adding parameters to the qdl boot action. Returns the
+        validated job.
         """
+
+        def add_parameters(job_dict):
+            for action in job_dict["actions"]:
+                if action.get("boot", {}).get("method") == "qdl":
+                    action["boot"].update(parameters)
+
         with (
             patch("lava_dispatcher.actions.boot.qdl.which") as which_mock,
             patch("lava_dispatcher.action.Action.parsed_command") as parsed_mock,
         ):
             which_mock.return_value = "/foo/qdl"
             parsed_mock.return_value = version_output
-            job = Factory().create_job("qcs6490-rb3gen2", "sample_jobs/qdl-boot.yaml")
+            job = Factory().create_job(
+                "qcs6490-rb3gen2",
+                "sample_jobs/qdl-boot.yaml",
+                job_dict_preprocessor=add_parameters,
+            )
             job.device.update({"board_qdl_id": "abcdef12"})
             job.device.update({"board_id": "abcdef12"})
             self.assertEqual(len(job.pipeline.actions), 4)
             job.validate()
             return job
 
-    def assert_skipblock(self, version_output, expected):
+    def assert_skipblock(self, version_output, supported):
         """
-        Assert whether --skipblock=sha256, which requires qdl 2.7, is passed
-        to qdl for the given "qdl --version" output.
+        Assert that "skipblock: true" passes --skipblock=sha256 to qdl when
+        the "qdl --version" output is 2.7 or higher, and is rejected otherwise.
         """
-        job = self.validate_qdl_job(version_output)
-        action = job.pipeline.find_action(FlashQDLAction)
-        if expected:
+        if supported:
+            job = self.validate_qdl_job(version_output, skipblock=True)
+            action = job.pipeline.find_action(FlashQDLAction)
             self.assertIn("--skipblock=sha256", action.base_command)
         else:
-            self.assertNotIn("--skipblock=sha256", action.base_command)
+            with self.assertRaises(JobError) as exc:
+                self.validate_qdl_job(version_output, skipblock=True)
+            self.assertIn("skipblock requires qdl 2.7 or higher", str(exc.exception))
+
+    def test_qdl_skipblock_off_by_default(self):
+        job = self.validate_qdl_job("qdl version v2.7")
+        action = job.pipeline.find_action(FlashQDLAction)
+        self.assertNotIn("--skipblock=sha256", action.base_command)
+
+    def test_qdl_skipblock_disabled(self):
+        job = self.validate_qdl_job("qdl version v2.7", skipblock=False)
+        action = job.pipeline.find_action(FlashQDLAction)
+        self.assertNotIn("--skipblock=sha256", action.base_command)
+
+    def test_qdl_skipblock_must_be_a_bool(self):
+        with self.assertRaises(Invalid):
+            self.validate_qdl_job("qdl version v2.7", skipblock="sha256")
 
     def assert_version_too_low(self, version_output, version):
         with self.assertRaises(ConfigurationError) as exc:

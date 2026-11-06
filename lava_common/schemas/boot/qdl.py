@@ -18,6 +18,7 @@ def schema():
         Optional("path"): str,
         Optional("storage"): str,
         Optional("debug"): bool,
+        Optional("skipblock"): bool,
         Optional("docker"): docker(),
     }
     return {**boot.schema(), **base}
