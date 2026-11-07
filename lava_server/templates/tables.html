@@ -6,7 +6,7 @@
 {% block table %}
 <div class="row">
   <div class="col-md-6">
-  <form class="form-inline" id="{{ table.prefix }}search_form" action="{% lava_querystring %}#{{ table.prefix|default:"table" }}" method="GET">
+  <form class="d-flex align-items-center gap-2" id="{{ table.prefix }}search_form" action="{% lava_querystring %}#{{ table.prefix|default:"table" }}" method="GET">
     {% for key,value in request.GET.items %}
       {% if key != table.prefix|add:"length" %}
         <input type="hidden" name="{{ key }}" value="{{ value }}">
@@ -21,7 +21,7 @@
   </div>
 {%  if table.has_searches %}
   <div class="col-md-5">
-    <form class="form-inline float-end" action="{% lava_querystring "search"="" %}#{{ table.prefix|default:"table" }}" method="GET">
+    <form class="d-flex align-items-center gap-2 float-end" action="{% lava_querystring "search"="" %}#{{ table.prefix|default:"table" }}" method="GET">
       {% for key,value in request.GET.items %}
         {% if key != table.prefix|add:"search" %}
           <input type="hidden" name="{{ key }}" value="{{ value }}">
@@ -130,14 +130,14 @@
 {% if table.page %}
 {% block pagination %}
 {% if table.page.has_previous or table.page.has_next %}
-<ul class="pager">
+<ul class="pagination">
   {% block pagination.previous %}
     {% if table.page.has_previous %}
-    <li class="previous">
-      <a href="{% lava_querystring table.prefixed_page_field=table.page.previous_page_number %}#{{ table.prefix|default:"table" }}">
+    <li class="page-item">
+      <a class="page-link" href="{% lava_querystring table.prefixed_page_field=table.page.previous_page_number %}#{{ table.prefix|default:"table" }}">
     {% else %}
-    <li class="previous disabled">
-      <a>
+    <li class="page-item disabled">
+      <a class="page-link">
     {% endif %}
       <span class="bi bi-rewind-fill"></span> {% trans "Previous" %}</a>
     </li>
@@ -154,11 +154,11 @@
 
   {% block pagination.next %}
     {% if table.page.has_next %}
-    <li class="next">
-      <a href="{% lava_querystring table.prefixed_page_field=table.page.next_page_number %}#{{ table.prefix|default:"table" }}">
+    <li class="page-item">
+      <a class="page-link" href="{% lava_querystring table.prefixed_page_field=table.page.next_page_number %}#{{ table.prefix|default:"table" }}">
     {% else %}
-    <li class="next disabled">
-      <a href="#">
+    <li class="page-item disabled">
+      <a class="page-link" href="#">
     {% endif %}
       {% trans "Next" %} <span class="bi bi-fast-forward-fill"></span></a>
   </li>

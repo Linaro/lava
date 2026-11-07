@@ -386,17 +386,14 @@ $(document).ready(function () {
         $("#table_link_container_" + this.chart_id).append(
             '<a id="data_table_link_' +
                 this.chart_id +
-                '" href="javascript:void(0)">Results table</a>');
+                '" href="javascript:void(0)" data-bs-toggle="modal"' +
+                ' data-bs-target="#data_table_dialog_' + this.chart_id +
+                '">Results table</a>');
 
         $('#data_table_dialog_' + this.chart_id).css('overflow', 'hidden');
 
         $('.scroller').each(function() {
             $(this).scrollLeft($(this)[0].scrollWidth);
-        });
-
-        var chart = this;
-        $("#data_table_link_" + this.chart_id).click(function(){
-            $('#data_table_dialog_' + chart.chart_id).modal("show");
         });
     }
 

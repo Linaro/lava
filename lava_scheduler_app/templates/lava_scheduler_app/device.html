@@ -4,13 +4,13 @@
 {% load utils %}
 
 {% block device_heading %}
-<ul class="pager">
-  <li class="previous{% if not previous_device %} disabled{% endif %}">
-    <a href="{% if previous_device %}{% url 'lava.scheduler.device.detail' previous_device %}{% else %}#{% endif %}"><span
+<ul class="pagination">
+  <li class="page-item{% if not previous_device %} disabled{% endif %}">
+    <a class="page-link" href="{% if previous_device %}{% url 'lava.scheduler.device.detail' previous_device %}{% else %}#{% endif %}"><span
             class="bi bi-rewind-fill"></span> {% trans "Previous device" %}</a>
   </li>
-  <li class="next{% if not next_device %} disabled{% endif %}">
-    <a href="{% if next_device %}{% url 'lava.scheduler.device.detail' next_device %}{% else %}#{% endif %}">{% trans "Next Device" %} <span class="bi bi-fast-forward-fill"></span></a>
+  <li class="page-item{% if not next_device %} disabled{% endif %}">
+    <a class="page-link" href="{% if next_device %}{% url 'lava.scheduler.device.detail' next_device %}{% else %}#{% endif %}">{% trans "Next Device" %} <span class="bi bi-fast-forward-fill"></span></a>
   </li>
 </ul>
 {% endblock %}

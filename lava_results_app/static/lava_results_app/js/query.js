@@ -41,7 +41,7 @@ open_condition_modal = function(query_name, condition_id, table_id,
 	$("#id_operator").val(operator);
     }
 
-    $("#condition_modal").modal("show");
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("condition_modal")).show();
 }
 
 table_changed = function() {
