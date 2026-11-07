@@ -50,7 +50,7 @@ PATTERNS = [
 
 # Vendored assets are excluded by filename, not by directory (see docstring).
 VENDORED_EXCLUDES = [
-    "--exclude=bootstrap-5.3.0.js",
+    "--exclude=bootstrap-5.3.8.js",
     "--exclude=bootbox.js",
     "--exclude=jquery*",
     "--exclude=popper*",

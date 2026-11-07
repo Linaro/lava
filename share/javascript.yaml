@@ -5,14 +5,14 @@ debian:
     lava_directory: lava_server/static/lava_server/js/
     replacements:
       # our name first, external name second
-      bootstrap-5.3.0.js: bootstrap.js
-    version: '5.3.0'
+      bootstrap-5.3.8.js: bootstrap.js
+    version: '5.3.8'
   - package: libjs-bootstrap5
     directory: /usr/share/javascript/bootstrap5/css/
     lava_directory: lava_server/static/lava_server/css/
     replacements:
-      bootstrap-5.3.0.css: bootstrap.css
-    version: '5.3.0'
+      bootstrap-5.3.8.css: bootstrap.css
+    version: '5.3.8'
   - package: node-popper2
     directory: /usr/share/javascript/popperjs2/
     lava_directory: lava_server/static/lava_server/js/
