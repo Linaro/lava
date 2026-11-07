@@ -88,21 +88,28 @@ Comment: Vendored copy is upstream v0.0.1 (project announced 2010-04-25);
  is dual-licensed MIT and GPL, like jQuery itself; the MIT (Expat) leg is
  used here.
 
-Files: lava_server/static/lava_server/css/bootstrap-3.4.1.css
- lava_server/static/lava_server/js/bootstrap-3.4.1.js
-Copyright: 2011-2019 Twitter, Inc.
-           Nicolas Gallagher and Jonathan Neal
+Files: lava_server/static/lava_server/css/bootstrap-5.3.8.css
+ lava_server/static/lava_server/js/bootstrap-5.3.8.js
+Copyright: 2011-2025 The Bootstrap Authors
 License: Expat
-Comment: bootstrap-3.4.1.css embeds normalize.css v3.0.3.
+Comment: Vendored copies carry provenance headers recording upstream URL
+ and sha256.
 
-Files: lava_server/static/lava_server/fonts/*
-Copyright: Jan Kovařík <https://glyphicons.com/>
+Files: lava_server/static/lava_server/js/popper-2.11.2.min.js
+Copyright: 2016-2021 Federico Zivolo and contributors
 License: Expat
-Comment: Glyphicons Halflings ship as part of Bootstrap; upstream states
- they are "released under the same license as Bootstrap" (see
- https://web.archive.org/web/20130713042758/https://www.glyphicons.com/glyphicons-licenses/).
- The fonts carry no notice themselves; this mirrors the stanza Debian
- uses in twitter-bootstrap3.
+Comment: The minified build carries only a "@popperjs/core v2.11.2 - MIT
+ License" banner; years and holders per Debian's node-popper2 package.
+
+Files: lava_server/static/lava_server/css/bootstrap-icons-1.11.0.css
+ lava_server/static/lava_server/fonts/bootstrap-icons.woff
+ lava_server/static/lava_server/fonts/bootstrap-icons.woff2
+Copyright: 2019-2023 The Bootstrap Authors
+License: Expat
+Comment: The CSS banner says "v1.10.5", a stale version string on
+ upstream's side; the file is the 1.11.0 release. The fonts carry no
+ notice and ship as part of the same MIT-licensed project
+ (https://github.com/twbs/icons).
 
 Files: lava_server/static/lava_server/js/jquery-3.6.1.js
 Copyright: OpenJS Foundation and other contributors
@@ -117,8 +124,10 @@ Comment: jquery.typeahead.css carries no notice; per upstream it is part
  (http://www.runningcoder.org/jquerytypeahead/).
 
 Files: lava_server/static/lava_server/js/bootbox.js
-Copyright: 2011-2014 Nick Payne
+Copyright: Nick Payne <nick@kurai.co.uk>
 License: Expat
+Comment: Vendored 6.0.4; the upstream banner gives author and MIT license
+ but no copyright years; the project was first released in 2011.
 
 Files: doc/v2/_static/default.css
  doc/v2/_static/scrolls.css
