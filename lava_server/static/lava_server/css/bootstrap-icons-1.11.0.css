@@ -1,3 +1,11 @@
+/* LAVA vendored asset, provenance:
+ * upstream: https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css
+ * upstream sha256: b9e2ee3ee86f447aebb15c14fe952200ce9afcde0e6b8b693bdc0907ea444b42
+ * local patches: font url ./fonts/ -> ../fonts/ (fonts vendored under lava_server/fonts/;
+ *   sha256 woff2 ae167342f8ad5aad834e774ddc99528b72ac9171a684f23ed79d83ea176ca04e,
+ *   woff 40f14c01ceff49ce457ff1e54fdf51b39498f845a85741cb08047172ac556bb9, both match upstream).
+ * The upstream banner says "v1.10.5"; that is a stale version string on their side.
+ */
 /*!
  * Bootstrap Icons v1.10.5 (https://icons.getbootstrap.com/)
  * Copyright 2019-2023 The Bootstrap Authors

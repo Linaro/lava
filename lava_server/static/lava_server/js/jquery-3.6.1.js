@@ -1,3 +1,8 @@
+/* LAVA vendored asset, provenance:
+ * upstream: https://code.jquery.com/jquery-3.6.1.js
+ * upstream sha256: df3941e6cdaec28533ad72b7053ec05f7172be88ecada345c42736bc2ffba4d2
+ * local patches: none (identical to upstream apart from this header).
+ */
 /*!
  * jQuery JavaScript Library v3.6.1
  * https://jquery.com/

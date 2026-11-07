@@ -3,6 +3,11 @@
  *
  * Patched for Bootstrap 5 markup (close button, default button class).
  *
+ * upstream: https://cdn.jsdelivr.net/npm/bootbox@4.4.0/bootbox.js
+ * upstream sha256: b5ca8f60fcb153e16cbf9b1576f9f12d827b26af705a98b8b7065bb59d2e6d8f
+ * local patches: data-dismiss -> data-bs-dismiss + .btn-close markup for the close
+ *   button; btn-default -> btn-secondary; close button placement in .modal-header.
+ *
  * http://bootboxjs.com/license.txt
  */
 
