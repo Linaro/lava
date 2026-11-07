@@ -42,6 +42,8 @@ PATTERNS = [
     "control-label",
     "help-block",
     "img-responsive",
+    # BS3 tab markup: <li role="presentation">; BS5 uses .nav-item/.nav-link
+    'role="presentation"',
     # runtime-break pattern: jQuery plugin API (gone from BS5 core)
     r"\$\([^)]*\)\.(modal|collapse|tab|tooltip|popover|dropdown)\(",
 ]

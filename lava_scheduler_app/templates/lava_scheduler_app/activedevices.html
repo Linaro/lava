@@ -7,14 +7,14 @@
 <h2>Active Devices - <small>excluding retired</small></h2>
 
 <ul class="nav nav-tabs">
-    <li role="presentation">
-		<a href="{% url 'lava.scheduler.alldevices' %}"><span class="bi bi-arrows-move" aria-hidden="true"></span> All Devices</a></li>
-    <li role="presentation" class="active">
-        <a href="{% url 'lava.scheduler.active_devices' %}"><span class="bi bi-play-fill" aria-hidden="true"></span> Active Devices</a></li>
-    <li role="presentation">
-        <a href="{% url 'lava.scheduler.online_devices' %}"><span class="bi bi-check" aria-hidden="true"></span> Online Devices</a></li>
-    <li role="presentation">
-		<a href="{% url 'lava.scheduler.maintenance_devices' %}"><span class="bi bi-tools" aria-hidden="true"></span> Maintenance Devices</a></li>
+    <li class="nav-item">
+		<a class="nav-link" href="{% url 'lava.scheduler.alldevices' %}"><span class="bi bi-arrows-move" aria-hidden="true"></span> All Devices</a></li>
+    <li class="nav-item">
+        <a class="nav-link active" href="{% url 'lava.scheduler.active_devices' %}"><span class="bi bi-play-fill" aria-hidden="true"></span> Active Devices</a></li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'lava.scheduler.online_devices' %}"><span class="bi bi-check" aria-hidden="true"></span> Online Devices</a></li>
+    <li class="nav-item">
+		<a class="nav-link" href="{% url 'lava.scheduler.maintenance_devices' %}"><span class="bi bi-tools" aria-hidden="true"></span> Maintenance Devices</a></li>
 </ul>
 
 {% render_table active_devices_table %}

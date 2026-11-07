@@ -249,8 +249,8 @@
 </div>
 
 <ul class="nav nav-tabs">
-  <li><a class="active" href="#Log" data-bs-toggle="tab">Summary</a></li>
-  <li><a href="#Timing" id="TimingButton" data-bs-toggle="tab">Timing</a></li>
+  <li class="nav-item"><a class="nav-link active" href="#Log" data-bs-toggle="tab">Summary</a></li>
+  <li class="nav-item"><a class="nav-link" href="#Timing" id="TimingButton" data-bs-toggle="tab">Timing</a></li>
   <li class="float-end"><a href="#bottom">End of page <span class="bi bi-chevron-down"></span></a></li>
   <li class="float-end" id="alert-link" {% if not job.failure_comment or job.health != job.HEALTH_COMPLETE %}style="display:none"{% endif %}><a href="#failure_block" data-bs-toggle="collapse" aria-expanded="false" aria-controls="failure_block">Show alert <span class="bi bi-chevron-up"></span></a></li>
 </ul>

@@ -6,16 +6,16 @@
 <h2>Active Jobs</h2>
 
 <ul class="nav nav-tabs">
-    <li role="presentation">
-        <a href="{% url 'lava.scheduler.job.list' %}"><span class="bi bi-asterisk" aria-hidden="true"></span> All Jobs</a></li>
-    <li role="presentation" class="active">
-        <a href="{% url 'lava.scheduler.job.active' %}"><span class="bi bi-play-fill" aria-hidden="true"></span> Active Jobs</a></li>
-    <li role="presentation">
-        <a href="{% url 'lava.scheduler.queue' %}"><span class="bi bi-pause-fill" aria-hidden="true"></span> Queued Jobs</a></li>
-    <li role="presentation">
-        <a href="{% url 'lava.scheduler.healthcheck' %}"><span class="bi bi-heart-fill" aria-hidden="true"></span> Healthcheck Jobs</a></li>
-    <li role="presentation">
-        <a href="{% url 'lava.scheduler.job.errors' %}"><span class="bi bi-flag-fill" aria-hidden="true"></span> Job Errors</a></li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'lava.scheduler.job.list' %}"><span class="bi bi-asterisk" aria-hidden="true"></span> All Jobs</a></li>
+    <li class="nav-item">
+        <a class="nav-link active" href="{% url 'lava.scheduler.job.active' %}"><span class="bi bi-play-fill" aria-hidden="true"></span> Active Jobs</a></li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'lava.scheduler.queue' %}"><span class="bi bi-pause-fill" aria-hidden="true"></span> Queued Jobs</a></li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'lava.scheduler.healthcheck' %}"><span class="bi bi-heart-fill" aria-hidden="true"></span> Healthcheck Jobs</a></li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'lava.scheduler.job.errors' %}"><span class="bi bi-flag-fill" aria-hidden="true"></span> Job Errors</a></li>
 </ul>
 
 {% render_table active_jobs_table %}
