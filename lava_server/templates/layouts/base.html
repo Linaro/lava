@@ -84,6 +84,12 @@
 <script src="{% static "lava_server/js/jquery-3.6.1.js" %}"></script>
 <script src="{% static "lava_server/js/popper-2.11.2.min.js" %}"></script>
 <script src="{% static "lava_server/js/bootstrap-5.3.0.js" %}"></script>
+<script>
+  // Bootstrap 5 does not auto-initialise tooltips from data attributes.
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+    new bootstrap.Tooltip(el);
+  });
+</script>
 {% block scripts %}
 {% endblock scripts %}
 

@@ -61,6 +61,9 @@ table_changed = function() {
     if ($("#id_table option:selected").text() != "metadata") {
         $("[for='id_field']").next().after('<span id="id_tooltip_available_fields" class="btn btn-info btn-sm" data-bs-toggle="tooltip" data-bs-placement="right" title="test">?</span>').after("&nbsp;");
         $("#id_tooltip_available_fields").attr("title", "Available fields: " + Object.keys(condition_choices[$("#id_table").val()]["fields"]).join(", "));
+        // Data-attribute tooltips are only initialised once at page load;
+        // this span is inserted later, so construct the Tooltip instance.
+        new bootstrap.Tooltip(document.getElementById("id_tooltip_available_fields"));
     }
 }
 

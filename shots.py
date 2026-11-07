@@ -362,6 +362,25 @@ def check(base):
                         ".forEach(m => bootstrap.Modal.getInstance(m)?.hide()); true",
                     )
                     time.sleep(0.4)
+            # Tooltips: BS5 never auto-initialises [data-bs-toggle="tooltip"],
+            # so assert the page itself initialised an instance (the regression
+            # the static test cannot see), then that it can actually show.
+            tip = "none"
+            for _ in range(5):
+                tip = evaluate(
+                    cdp,
+                    "(() => { const el = document.querySelector"
+                    "('[data-bs-toggle=\"tooltip\"]'); if (!el) return 'none';"
+                    " const i = bootstrap.Tooltip.getInstance(el);"
+                    " if (!i) return 'uninitialized'; i.show();"
+                    " const ok = !!document.querySelector('.tooltip.show');"
+                    " i.hide(); return ok ? 'ok' : 'no-show'; })()",
+                )
+                if tip != "no-show":
+                    break
+                time.sleep(0.2)
+            if tip not in ("none", "ok"):
+                bad.append(f"tooltip probe: {tip}")
             print(
                 f"{'FAIL' if bad else 'PASS'} {page}" + (f": {bad}" if bad else ""),
                 flush=True,
