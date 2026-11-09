@@ -11,7 +11,7 @@ import shlex
 
 from lava_common.constants import LAVA_DOWNLOADS
 from lava_common.device_mappings import remove_device_container_mappings
-from lava_common.exceptions import LAVATimeoutError
+from lava_common.exceptions import LAVABug, LAVATimeoutError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.overlay import CreateOverlay
 from lava_dispatcher.actions.test.multinode import MultinodeTestAction
@@ -135,12 +135,18 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         # start container
         # create USB device mapping to container
         # connect to container, and run lava-test-shell over it
-        location = self.get_namespace_data(
+        location: str | None = self.get_namespace_data(
             action="test", label="shared", key="location"
         )
-        overlay = self.get_namespace_data(
+        if location is None:
+            raise LAVABug("Test location is not set")
+        overlay: str | None = self.get_namespace_data(
             action="test", label="results", key="lava_test_results_dir"
-        ).strip("/")
+        )
+        if overlay is None:
+            raise LAVABug("Results dir is not set")
+
+        overlay = overlay.strip("/")
 
         container = f"lava-docker-test-shell-{self.job.job_id}-{self.level}"
         prefix = self.job.parameters.get("dispatcher", {}).get("prefix", "")
