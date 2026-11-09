@@ -85,6 +85,8 @@ PAGES = [
     "/scheduler/allworkers",
     "/scheduler/jobsubmit",
     "/api/tokens/",
+    "/api/v0.2/",
+    "/api/v0.2/devices/",
     "/me/",
     "/scheduler/myjobs",
     "/scheduler/favorite-jobs",

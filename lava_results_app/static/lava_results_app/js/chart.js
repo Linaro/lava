@@ -1206,6 +1206,8 @@ $(document).ready(function () {
                 ", Max: " + chart.legend_items[$(this).text()].max +
                 ", Avg: " + chart.legend_items[$(this).text()].avg;
             $(this).attr("title", title);
+            // base.html inits tooltips at page load; these cells appear on every draw.
+            bootstrap.Tooltip.getOrCreateInstance(this);
         });
     }
 

@@ -69,5 +69,16 @@
 {% block script %}
 {% include 'layouts/_footer.html' %}
 
+{# The BS5 navbar needs popper and bootstrap 5 JS; DRF only bundles its own Bootstrap 3. #}
+<script src="{% static "lava_server/js/popper-2.11.2.min.js" %}"></script>
+<script src="{% static "lava_server/js/bootstrap-5.3.8.js" %}"></script>
 {{ block.super }}
+<script>
+  {# DRF ships Bootstrap 3 markup; promote its dropdown triggers so the #}
+  {# Bootstrap 5 data-API (loaded above) owns them instead of the BS3 JS. #}
+  document.querySelectorAll('[data-toggle="dropdown"]').forEach(function(el) {
+    el.setAttribute('data-bs-toggle', 'dropdown');
+    el.removeAttribute('data-toggle');
+  });
+</script>
 {% endblock script %}
