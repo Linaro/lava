@@ -8,6 +8,7 @@ from __future__ import annotations
 import os
 import pathlib
 import shlex
+from typing import TYPE_CHECKING
 
 from lava_common.constants import LAVA_DOWNLOADS
 from lava_common.device_mappings import remove_device_container_mappings
@@ -23,13 +24,16 @@ from lava_dispatcher.utils.containers import DeviceContainerMappingMixin
 from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher.utils.udev import get_udev_devices
 
+if TYPE_CHECKING:
+    from typing import Any
+
 
 class GetBoardId(Action):
     @property
-    def device_info(self):
+    def device_info(self) -> list[dict[str, Any]] | None:
         return self.job.device.get("device_info")
 
-    def get_board_id(self):
+    def get_board_id(self) -> str | None:
         device_info = self.device_info
         if not device_info:
             return None
@@ -42,7 +46,7 @@ class DockerTestAction(GetBoardId):
     summary = "Runs tests in a docker container, with the DUT available via adb/fastboot over USB"
     timeout_exception = LAVATimeoutError
 
-    def populate(self, parameters):
+    def populate(self, parameters: dict[str, Any]) -> None:
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(DockerTestSetEnvironment(self.job))
         self.pipeline.add_action(CreateOverlay(self.job))
@@ -61,12 +65,16 @@ class DockerTestSetEnvironment(GetBoardId):
     summary = description
     timeout_exception = LAVATimeoutError
 
-    def run(self, connection, max_end_time):
-        environment = self.job.parameters.get("environment", {})
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
+        environment: dict[str, str | None] = self.job.parameters.get("environment", {})
         environment["ANDROID_SERIAL"] = self.get_board_id()
         environment["LAVA_BOARD_ID"] = self.get_board_id()
 
-        connections = self.job.device.get("commands", {}).get("connections", {})
+        connections: dict[str, dict[str, Any]] = self.job.device.get(
+            "commands", {}
+        ).get("connections", {})
         for name, command in connections.items():
             connect = command.get("connect")
             tags = command.get("tags", [])
@@ -83,7 +91,7 @@ class DockerTestSetEnvironment(GetBoardId):
         if test_delay := self.job.device.get("character_delays", {}).get("test"):
             environment["LAVA_TEST_CHARACTER_DELAYS"] = test_delay
 
-        commands = ["connect", "hard_reset", "power_on", "power_off"]
+        commands: list[str] = ["connect", "hard_reset", "power_on", "power_off"]
         for c in commands:
             cmd = self.job.device.get("commands", {}).get(c)
             if cmd:
@@ -102,7 +110,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
     description = "Runs lava-test-shell in a docker container"
     summary = "Runs lava-test-shell in a docker container"
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
 
         self.test_docker_bind_mounts = self.job.parameters["dispatcher"].get(
@@ -130,7 +138,9 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
                 )
                 return
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         # obtain lava overlay
         # start container
         # create USB device mapping to container
@@ -189,7 +199,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         cmd = shlex.join(docker_cmd)
         self.logger.debug("Starting docker test shell container: %s" % cmd)
         shell_connection = ShellSession(cmd, self.timeout, logger=self.logger)
-        shell_connection.prompt_str = "docker-test-shell:"
+        shell_connection.prompt_str = ["docker-test-shell:"]
         self.parameters["connection-namespace"] = "docker-test-shell"
         self.set_namespace_data(
             action="shared",

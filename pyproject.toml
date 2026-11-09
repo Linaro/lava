@@ -284,6 +284,7 @@ project-includes = [
   "lava_dispatcher/actions/deploy/apply_overlay.py",
   "lava_dispatcher/actions/deploy/prepare.py",
   "lava_dispatcher/actions/deploy_strategy.py",
+  "lava_dispatcher/actions/test/docker.py",
   "lava_dispatcher/actions/test/mixins.py",
   "lava_dispatcher/actions/test/multinode.py",
   "lava_dispatcher/actions/test/service.py",
