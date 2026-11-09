@@ -15,9 +15,11 @@ set -e
 
 echo "Seeding dummy test data"
 
-lava-server manage device-types add qemu 2>/dev/null || true
-lava-server manage workers add worker01 2>/dev/null || true
-lava-server manage devices add --device-type qemu --worker worker01 qemu-01 2>/dev/null || true
+# No `|| true`: a failed add is a real signal — the dev container DB is rebuilt
+# fresh by the entrypoint, so a failed add means the seed environment is broken.
+lava-server manage device-types add qemu
+lava-server manage workers add worker01
+lava-server manage devices add --device-type qemu --worker worker01 qemu-01
 
 python_code=$(cat <<'PYEOF'
 import json
