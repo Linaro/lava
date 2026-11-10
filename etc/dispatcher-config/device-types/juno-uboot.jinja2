@@ -19,13 +19,6 @@
     "setenv loadinitrd 'afs load ${initrd_name} {RAMDISK_ADDR}; setenv initrd_param {RAMDISK_ADDR}'"])
 -%}
 
-{% block body %}
-
-board_id: '{{ board_id|default('0000000000') }}'
-usb_vendor_id: '{{ usb_vendor_id|default('0000') }}'
-usb_product_id: '{{ usb_product_id|default('0000') }}'
-usb_filesystem_label: '{{ usb_filesystem_label|default('JUNO') }}'
-
 {% block parameters -%}
 parameters:
   booti:
@@ -46,6 +39,13 @@ parameters:
         uuid: "{{ usb_uuid }}"
         device_id: "{{ usb_device_id|default(0) }}"  # the bootloader device id for this media on the 'usb' interface
 {% endblock parameters -%}
+
+{% block body %}
+
+board_id: '{{ board_id|default('0000000000') }}'
+usb_vendor_id: '{{ usb_vendor_id|default('0000') }}'
+usb_product_id: '{{ usb_product_id|default('0000') }}'
+usb_filesystem_label: '{{ usb_filesystem_label|default('JUNO') }}'
 
 actions:
   deploy:
