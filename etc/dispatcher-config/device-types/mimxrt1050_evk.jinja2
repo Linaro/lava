@@ -40,10 +40,6 @@ actions:
 
       jlink:
         parameters:
-          command:
-            JLinkExe
-          address:
-            0x00000000
           command: JLinkExe
           address: {{ load_address|default("0x00000000") }}
           processor: {{ processor|default("MCIMXRT1052") }}
