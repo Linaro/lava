@@ -195,8 +195,6 @@ timeouts:
   connections:
     dd-image:
       minutes: {{ connection_timeout_dd_image | default(20) }}
-    u-boot-interrupt:
-      minutes: {{ action_timeout_u_boot_interrupt | default(2) }}
     uboot-commands:
       minutes: {{ action_timeout_uboot_commands | default(3) }}
     u-boot-commands:
