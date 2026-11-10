@@ -24,11 +24,16 @@ actions:
         user: {{ ssh_user|default('root') }}
         port: {{ ssh_port|default(22) }}
         identity_file: {{ ssh_identity_file }}
+{% if flasher_deploy_commands %}
+      flasher:
+        commands: {{ flasher_deploy_commands|yaml_quote }}
+{% endif %}
   boot:
     connections:
       serial:
     methods:
       ssh:
+      minimal:
       ipxe:
         parameters:
           bootloader_prompt: {{ bootloader_prompt|default('iPXE>') }}
