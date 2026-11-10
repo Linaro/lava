@@ -32,11 +32,11 @@ compress_command_map: Mapping[str, tuple[str, ...]] = {
 }
 
 decompress_command_map: Mapping[str, tuple[str, ...]] = {
-    "xz": ("unxz",),
     # -f: decompress even when the input has multiple hard links, which is the
     # case for files linked into a namespace dir by PreDownloadedAction.
+    "xz": ("unxz", "-f"),
     "gz": ("gunzip", "-f"),
-    "bz2": ("bunzip2",),
+    "bz2": ("bunzip2", "-f"),
     "zip": ("unzip",),
     "zstd": ("unzstd", "-T0"),
 }
