@@ -121,9 +121,14 @@ class TestUbootTemplates(BaseTemplateTest):
                     "Avenger96 should not have 'setenv ethaddr' as MAC address is pre-configured already."
                 )
 
-    def test_rpi3_32_template(self):
+    def test_rpi3_template(self):
+        for template in ("bcm2837-rpi-3-b.jinja2", "bcm2837-rpi-3-b-32.jinja2"):
+            with self.subTest(template=template):
+                self.check_rpi3_kernel_args(template)
+
+    def check_rpi3_kernel_args(self, template):
         checked = False
-        data = """{% extends 'bcm2837-rpi-3-b-32.jinja2' %}"""
+        data = "{%% extends '%s' %%}" % template
 
         # test appending to kernel args
         context = {"extra_kernel_args": "extra_arg=extra_val"}
