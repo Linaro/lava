@@ -3,15 +3,23 @@
 
 {% set fastboot_sequence = ['no-flash-boot'] %}
 {% set fastboot_serial_number = fastboot_serial_number|default("'0000000000'") %}
-{% set device_info = device_info|default([{'board_id': fastboot_serial_number}]) %}
 {% set board_qdl_id = board_qdl_id|default('00000000') %}
+{# board_cid is the SoC specific chip ID reported by the device in EDL mode #}
+{% set board_cid = board_cid|default('0420') %}
+{% set board_id = board_id|default("QUSB_BULK_CID:" + board_cid + "_SN:" + board_qdl_id) %}
+{# skip the fastboot serial number if the board doesn't boot to fastboot #}
+{% if fastboot_serial_number in ["'0000000000'", '0000000000', '00000000'] %}
+{% set device_info = device_info|default([{'board_id': board_id}, {'board_id': board_qdl_id}]) %}
+{% else %}
+{% set device_info = device_info|default([{'board_id': board_id}, {'board_id': fastboot_serial_number}, {'board_id': board_qdl_id}]) %}
+{% endif %}
 
 {% block body %}
 adb_serial_number: "{{ adb_serial_number|default('0000000000') }}"
 fastboot_serial_number: "{{ fastboot_serial_number|default('0000000000') }}"
 fastboot_options: {{ fastboot_options|default([]) }}
 board_qdl_id: '{{ board_qdl_id }}'
-board_id: '{{ board_id|default("QUSB_BULK_CID:0420_SN:" + board_qdl_id) }}'
+board_id: '{{ board_id }}'
 usb_vendor_id: '05c6'
 usb_product_id: '{{ usb_product_id|default('9008')}}'
 
