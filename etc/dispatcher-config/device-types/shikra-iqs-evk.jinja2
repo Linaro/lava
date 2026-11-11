@@ -1,0 +1,8 @@
+{# device_type = 'shikra-iqs-evk' #}
+{% extends 'base-qdl.jinja2' %}
+
+{% set board_cid = board_cid|default('0488') %}
+{# the EDL USB serial string includes the board JTAG ID #}
+{% set board_jid = board_jid|default('003690E1') %}
+{% set board_qdl_id = board_qdl_id|default('00000000') %}
+{% set board_id = board_id|default("F09_D0011_V1.0_CID:" + board_cid + "_SN:" + board_qdl_id + "_JID:" + board_jid) %}
