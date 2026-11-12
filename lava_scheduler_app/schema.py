@@ -24,6 +24,7 @@ from voluptuous import (
 )
 
 from lava_common.schemas import CONTEXT_VARIABLES
+from lava_common.schemas.command import CREATE_SECRET_NAME
 
 INVALID_CHARACTER_ERROR_MSG = "Invalid character"
 
@@ -255,7 +256,9 @@ def _job_command_schema():
             Required("name"): str,
             Optional("timeout"): _timeout_schema(),
             Optional("namespace"): str,
-            Optional("create_secret"): str,
+            Optional("create_secret"): All(
+                str, Length(min=1), Match(CREATE_SECRET_NAME)
+            ),
         },
         extra=True,
     )

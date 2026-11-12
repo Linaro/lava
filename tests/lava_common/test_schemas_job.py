@@ -217,3 +217,15 @@ class TestCommandCreateSecret:
     def test_create_secret_should_be_a_string(self):
         with pytest.raises(Invalid):
             validate(command_job(create_secret=True), strict=True)
+
+    def test_create_secret_cannot_be_empty(self):
+        # "" validated but the dispatcher silently ignored it
+        with pytest.raises(Invalid):
+            validate(command_job(create_secret=""), strict=True)
+
+    @pytest.mark.parametrize(
+        "name", ["LAVA_FOO", "PATH", "2BAD", "密钥", "bad-name", "FOO\n"]
+    )
+    def test_create_secret_must_be_safe_env_name(self, name):
+        with pytest.raises(Invalid):
+            validate(command_job(create_secret=name), strict=True)

@@ -24,17 +24,22 @@ Set `create_secret` to store the output of the `do` command as a
 actions:
 - command:
     name: generate_wifi_ssid
-    create_secret: LAVA_WIFI_SSID
+    create_secret: WIFI_SSID
 - command:
     name: generate_wifi_ap
-    create_secret: LAVA_WIFI_PASSPHRASE
+    create_secret: WIFI_PASSPHRASE
 ```
+
+`create_secret` must be a valid environment variable name (letters, digits and
+underscores, not starting with a digit). It must not start with `LAVA_` (that
+prefix is reserved for the job environment) and it must not be `PATH` (the
+value would break every later command of the job).
 
 The output is stripped of surrounding whitespace and is not shown in the job
 log. The secret is then masked in the logs, exported to the environment of
 later commands on the dispatcher, and written to the `secrets` file of the
 overlay by later deploy actions. In this example, `generate_wifi_ap` can use
-`$LAVA_WIFI_SSID`.
+`$WIFI_SSID`.
 
 !!! note "Empty output"
     If the command prints nothing, no secret is created.
