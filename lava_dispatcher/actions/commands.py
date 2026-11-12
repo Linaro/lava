@@ -6,10 +6,13 @@
 from __future__ import annotations
 
 import os
+import re
+from shlex import join as shlex_join
 from shlex import split as shlex_split
 from typing import TYPE_CHECKING
 
-from lava_common.exceptions import ConfigurationError, InfrastructureError
+from lava_common.exceptions import ConfigurationError, InfrastructureError, JobError
+from lava_common.schemas.command import CREATE_SECRET_NAME
 from lava_dispatcher.action import Action
 
 if TYPE_CHECKING:
@@ -44,6 +47,14 @@ class CommandAction(Action):
     def validate(self) -> None:
         super().validate()
         cmd_name = self.parameters["name"]
+        # builtin branches return early, so check the name before any of them
+        secret_name = self.parameters.get("create_secret", "")
+        if secret_name:
+            if not re.fullmatch(CREATE_SECRET_NAME, secret_name):
+                raise JobError(
+                    "create_secret '%s' must be a valid environment variable "
+                    "name, not start with LAVA_ and not be PATH" % secret_name
+                )
 
         if cmd_name in self.builtin_commands:
             if cmd_name == "usbg_ms_commands_disable":
@@ -52,8 +63,11 @@ class CommandAction(Action):
                         "methods"
                     ]["usbg-ms"]["disable"]
                     if isinstance(cmd, list):
-                        cmd = " ".join(cmd)
+                        # flatten to a single command: run() re-splits this with
+                        # shlex.split, so quote-join keeps the argv identical
+                        cmd = shlex_join(cmd)
                     self.cmd = {"do": cmd}
+                    self._check_create_secret()
                 except KeyError:
                     self.errors_add(
                         "Command 'usbg_ms_commands.disable' not defined for this device"
@@ -65,15 +79,16 @@ class CommandAction(Action):
                 )
                 if cmd_list:
                     self.cmd = {"do": cmd_list}
+                    self._check_create_secret()
                 else:
                     self.errors_add(
                         "Command for 'stop_test_services' not found. "
                         "No 'test.services' action defined?"
                     )
-
                 return
             if cmd_name in self.job.device["commands"]:
                 self.cmd = {"do": self.job.device["commands"][cmd_name]}
+                self._check_create_secret()
                 return
 
             self.errors_add("Command '%s' not defined for this device" % cmd_name)
@@ -98,6 +113,15 @@ class CommandAction(Action):
                 'User command "%s" is invalid: "do" and "undo" should be '
                 "non-empty strings or non-empty lists of non-empty strings" % cmd_name
             )
+
+        self._check_create_secret()
+
+    def _check_create_secret(self) -> None:
+        # `do` is resolved per branch above, so this runs on every branch
+        if self.parameters.get("create_secret") and isinstance(
+            self.cmd.get("do"), list
+        ):
+            raise JobError("create_secret cannot be used with a list of commands")
 
     @staticmethod
     def is_command(cmd: str | list[str] | list[list[str]] | None) -> bool:
@@ -125,13 +149,26 @@ class CommandAction(Action):
                 if isinstance(c, str):
                     c = shlex_split(c)
                 # parsed_command returns output, but expects a list
-                out = self.parsed_command(c, show_output=False).strip()
+                out = self.parsed_command(
+                    c, show_output=False, redact_output=True
+                ).strip()
                 if out:
-                    self.logger.debug("Creating secret %s", secret_name)
+                    if "\n" in out:
+                        raise JobError("create_secret output must be a single line")
+                    self.logger.debug(
+                        "Creating secret %s (%d bytes)", secret_name, len(out)
+                    )
                     # also masks the value in the logs
                     self.job.secrets.add(secret_name, out)
                     # we add job secrets to env in lava-run, also add newly created ones
+                    # shortcut: validation only blocks LAVA_*/PATH; a secret
+                    # named HOME or IFS still clobbers the job env
                     os.environ[secret_name] = out
+                else:
+                    self.logger.debug(
+                        "create_secret %s: command produced no output, no secret created",
+                        secret_name,
+                    )
             else:
                 self.run_cmd(c)
         return connection

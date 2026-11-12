@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 from tarfile import open as tarfile_open
 from tempfile import TemporaryDirectory
@@ -282,13 +283,20 @@ class TestCreateOverlayJobTags(LavaDispatcherTestCase):
 
 
 class TestCreateOverlaySecrets(LavaDispatcherTestCase):
-    def _overlay_dir(self, tmp_dir: str, secrets: dict[str, str] | None = None) -> Path:
+    def _overlay_dir(
+        self,
+        tmp_dir: str,
+        secrets: dict[str, str] | None = None,
+        env_dict: dict[str, str] | None = None,
+    ) -> Path:
         """Run CreateOverlay in ``tmp_dir`` and return the overlay directory."""
         job_parameters: dict[str, Any] = {
             "dispatcher": {"dispatcher_ip": "192.0.2.1"},
         }
         if secrets is not None:
             job_parameters["secrets"] = secrets
+        if env_dict is not None:
+            job_parameters["env_dut"] = True
 
         job = self.create_simple_job(
             device_dict={
@@ -305,7 +313,18 @@ class TestCreateOverlaySecrets(LavaDispatcherTestCase):
         overlay = CreateOverlay(job)
         overlay.parameters = {"namespace": "common"}
 
-        with patch.object(job, "mkdtemp", return_value=tmp_dir):
+        real_ns_data = overlay.get_namespace_data
+
+        def fake_ns_data(**kwargs):
+            # feed the env_dut lookup only, real data for every other caller
+            if kwargs.get("action") == "deploy-device-env":
+                return env_dict
+            return real_ns_data(**kwargs)
+
+        with (
+            patch.object(job, "mkdtemp", return_value=tmp_dir),
+            patch.object(overlay, "get_namespace_data", side_effect=fake_ns_data),
+        ):
             overlay.validate()
             overlay.run(None, None)
 
@@ -327,6 +346,49 @@ class TestCreateOverlaySecrets(LavaDispatcherTestCase):
             token_secret_path = secrets_dir_path / "token"
             self.assertTrue(token_secret_path.is_file())
             self.assertEqual(token_secret_path.read_bytes(), b"s3cr3t")
+
+    def test_secrets_file_survives_shell_metacharacters(self) -> None:
+        # the DUT sources the file: a value with spaces or quotes must not
+        # break sourcing of the lines after it
+        with TemporaryDirectory(prefix="overlay-secrets-") as tmp_dir:
+            overlay_dir = self._overlay_dir(
+                tmp_dir, {"FOO": "two words", "BAR": "it's", "PLAIN": "s3cr3t"}
+            )
+            secrets_path = overlay_dir / "secrets"
+            out = subprocess.run(
+                [
+                    "/bin/sh",
+                    "-c",
+                    f'. "{secrets_path}"; printf "%s|%s|%s" "$FOO" "$BAR" "$PLAIN"',
+                ],
+                capture_output=True,
+                check=True,
+                text=True,
+            )
+            self.assertEqual(out.stdout, "two words|it's|s3cr3t")
+
+    def test_env_dut_values_are_quoted(self) -> None:
+        # env_dut values are appended to the same sourced file: quote them too,
+        # otherwise spaces drop the variable and $(...) runs on the DUT
+        with TemporaryDirectory(prefix="overlay-secrets-") as tmp_dir:
+            overlay_dir = self._overlay_dir(
+                tmp_dir,
+                {"PLAIN": "s3cr3t"},
+                {"SPACED": "two words", "BASHY": "$(true)"},
+            )
+            secrets_path = overlay_dir / "secrets"
+            out = subprocess.run(
+                [
+                    "/bin/sh",
+                    "-c",
+                    f'. "{secrets_path}"; '
+                    'printf "%s|%s|%s" "$SPACED" "$BASHY" "$PLAIN"',
+                ],
+                capture_output=True,
+                check=True,
+                text=True,
+            )
+            self.assertEqual(out.stdout, "two words|$(true)|s3cr3t")
 
     def test_no_secrets_file_without_secrets(self) -> None:
         # An empty or missing "secrets" job section must not create the file:

@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, patch
 from unittest.mock import call as mock_call
 
-from lava_common.exceptions import InfrastructureError
+from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.actions.commands import CommandAction
 from lava_dispatcher.actions.deploy.overlay import CreateOverlay
 from lava_dispatcher.device import DeviceDict
@@ -212,6 +212,20 @@ class TestCommands(LavaDispatcherTestCase):
         self.assertIsNone(self.job.secrets.get("EMPTY_SECRET"))
         self.assertNotIn("EMPTY_SECRET", os.environ)
 
+    def test_secret_command_undo_uses_run_cmd(self):
+        # create_secret changes the do path only; cleanup still runs
+        # the undo command via run_cmd
+        self.addCleanup(os.environ.pop, "TEST_CREATE_SECRET", None)
+        self.action.parameters = {
+            "name": "secret_command",
+            "create_secret": "TEST_CREATE_SECRET",
+        }
+        self.action.validate()
+        self.action.run(None, 600)
+        self.action.run_cmd.reset_mock()
+        self.action.cleanup(None)
+        self.action.run_cmd.assert_called_with("/bin/undo")
+
 
 class TestCommandSecretOverlay(LavaDispatcherTestCase):
     def test_created_secret_written_to_overlay(self):
@@ -247,4 +261,147 @@ class TestCommandSecretOverlay(LavaDispatcherTestCase):
                 overlay.run(None, None)
             secrets = (Path(tmp_dir) / f"lava-{job.job_id}" / "secrets").read_text()
 
-        self.assertIn("TEST_OVERLAY_SECRET=mysecret!", secrets.splitlines())
+        self.assertIn("TEST_OVERLAY_SECRET='mysecret!'", secrets.splitlines())
+
+
+class TestCommandSecretGuards(LavaDispatcherTestCase):
+    def setUp(self):
+        super().setUp()
+        self.job = self.create_simple_job(
+            device_dict=DeviceDict(
+                {
+                    "commands": {
+                        # device builtins, like real device dicts have
+                        "power_off": ["/bin/true", "/bin/false"],
+                        "hard_reset": "echo reset-value",
+                        "users": {
+                            "multiline_command": {"do": "printf 'one\\ntwo\\n'"},
+                            "multi_command": {"do": ["/bin/true", "/bin/true"]},
+                            "single_command": {"do": "/bin/true"},
+                            "leaky_command": {
+                                "do": "bash -c 'echo \"$LEAK_SRC\"; exit 1'"
+                            },
+                        },
+                    }
+                }
+            )
+        )
+        self.action = CommandAction(self.job)
+        self.action.run_cmd = MagicMock()
+
+    def test_multiline_secret_output_rejected(self):
+        self.action.parameters = {
+            "name": "multiline_command",
+            "create_secret": "MULTILINE_SECRET",
+        }
+        self.action.validate()
+        with self.assertRaises(JobError):
+            self.action.run(None, 600)
+
+    def test_multi_command_list_rejected(self):
+        self.action.parameters = {
+            "name": "multi_command",
+            "create_secret": "LIST_SECRET",
+        }
+        with self.assertRaises(JobError):
+            self.action.validate()
+
+    def test_invalid_secret_name_rejected(self):
+        self.action.parameters = {
+            "name": "single_command",
+            "create_secret": "bad-name",
+        }
+        with self.assertRaises(JobError) as ctx:
+            self.action.validate()
+        # user typo => "Job" (fix your job), not "Bug" (report to maintainers)
+        self.assertEqual(ctx.exception.error_type, "Job")
+
+    def test_secret_name_with_slash_rejected(self):
+        self.action.parameters = {
+            "name": "single_command",
+            "create_secret": "bad/name",
+        }
+        with self.assertRaises(JobError):
+            self.action.validate()
+
+    def test_path_secret_rejected(self):
+        # os.environ["PATH"] = <secret> would break every later command
+        self.action.parameters = {
+            "name": "single_command",
+            "create_secret": "PATH",
+        }
+        with self.assertRaises(JobError):
+            self.action.validate()
+
+    def test_lava_prefixed_secret_rejected(self):
+        # LAVA_* is the job environment namespace: clobbering e.g. LAVA_TOKEN
+        # silently breaks the results upload mid-job
+        self.action.parameters = {
+            "name": "single_command",
+            "create_secret": "LAVA_TOKEN",
+        }
+        with self.assertRaises(JobError):
+            self.action.validate()
+
+    def test_non_ascii_secret_name_rejected(self):
+        # isidentifier() would accept this; not a usable env var name
+        self.action.parameters = {
+            "name": "single_command",
+            "create_secret": "密钥",
+        }
+        with self.assertRaises(JobError):
+            self.action.validate()
+
+    def test_failed_secret_command_hides_output(self):
+        action = CommandAction(self.job)
+        action.parameters = {
+            "name": "leaky_command",
+            "create_secret": "LEAKY_SECRET",
+        }
+        action.validate()
+        # the would-be secret exists only in the command's output, like a
+        # failing `curl` of a token endpoint
+        os.environ["LEAK_SRC"] = "supersecretvalue"
+        self.addCleanup(os.environ.pop, "LEAK_SRC", None)
+        # capture everything the job logger emits (what gets uploaded)
+        capture = MagicMock()
+        self.job.logger.handlers.append(capture)
+        self.addCleanup(self.job.logger.handlers.remove, capture)
+        with self.assertRaises(InfrastructureError):
+            action.run(None, 600)
+        emitted = " ".join(str(c) for c in capture.emit.call_args_list)
+        # the failed generator must not leak its output into the log
+        # uploaded to the scheduler, nor into the recorded results
+        self.assertNotIn("supersecretvalue", emitted)
+        self.assertNotIn("supersecretvalue", str(action.errors))
+        self.assertNotIn("supersecretvalue", str(action.results))
+
+    def test_builtin_list_command_rejected(self):
+        # builtins may be a list and validate() returns early for them:
+        # the guards must still apply, as command.md promises
+        self.action.parameters = {
+            "name": "power_off",
+            "create_secret": "BUILTIN_SECRET",
+        }
+        with self.assertRaises(JobError):
+            self.action.validate()
+
+    def test_invalid_name_rejected_for_builtin(self):
+        self.action.parameters = {
+            "name": "power_off",
+            "create_secret": "bad-name",
+        }
+        with self.assertRaises(JobError):
+            self.action.validate()
+
+    def test_builtin_scalar_command_allowed(self):
+        # the supported builtin combination: single scalar command
+        self.action.parameters = {
+            "name": "hard_reset",
+            "create_secret": "BUILTIN_SECRET",
+        }
+        self.action.validate()
+        self.assertTrue(self.action.valid)
+        self.addCleanup(os.environ.pop, "BUILTIN_SECRET", None)
+        self.action.run(None, 600)
+        self.assertEqual(self.job.secrets.get("BUILTIN_SECRET"), "reset-value")
