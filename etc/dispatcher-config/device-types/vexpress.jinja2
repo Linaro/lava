@@ -58,6 +58,8 @@
 {% set boot_character_delay = boot_character_delay | default(30) %}
 {% set test_character_delay = test_character_delay | default(boot_character_delay) %}
 
+{% set uuid_required = uuid_required|default(False) %}
+
 {# adds the parameters: top level block #}
 {% block parameters %}
 {{ super() -}}
@@ -94,29 +96,6 @@
     ramdisk: '{{ bootz_ramdisk_addr|default(vexpress_bootz_ramdisk_addr) }}'
     dtb: '{{ bootz_dtb_addr|default(vexpress_bootz_dtb_addr) }}'
 {% endif %}
-{%- if sata_uuid or sd_uuid or usb_uuid %}
-  media:
-{% if sata_uuid %}
-    sata:
-      UUID-required: False
-      {{ sata_label|default('ST160LM003') }}:
-        uuid: "{{ sata_uuid }}"
-        device_id: "{{ sata_id|default(0) }}"
-        uboot_interface: "{{ sata_interface|default('scsi') }}"
-{% endif %}
-{% if sd_uuid %}
-    sd:
-      {{ sd_label }}:
-        uuid: "{{ sd_uuid }}"
-        device_id: "{{ sd_device_id }}"  # the bootloader device id for this media on the 'sd' interface
-{% endif %}
-{% if usb_uuid %}
-    usb:
-      {{ usb_label|default('SanDisk_Ultra') }}:
-        uuid: "{{ usb_uuid }}"  # /dev/disk/by-id/
-        device_id: "{{ usb_device_id }}"  # the bootloader device id for this media on the 'usb' interface
-{% endif %}
-{%- endif %}
 {% endblock parameters %}
 
 {% set action_timeout_auto_login = action_timeout_auto_login | default(5) %}
