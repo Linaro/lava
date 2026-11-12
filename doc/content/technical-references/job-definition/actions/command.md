@@ -36,13 +36,31 @@ prefix is reserved for the job environment) and it must not be `PATH` (the
 value would break every later command of the job).
 
 The output is stripped of surrounding whitespace and is not shown in the job
-log. The secret is then masked in the logs, exported to the environment of
-later commands on the dispatcher, and written to the `secrets` file of the
-overlay by later deploy actions. In this example, `generate_wifi_ap` can use
-`$WIFI_SSID`.
+log. When the command fails its output is kept out of the log too, so a
+command that printed its value and then failed cannot leak it. The secret is masked in
+the logs, exported to the environment of later commands on the dispatcher, and
+written to the `secrets` file of the overlay by later deploy actions.
+
+The action runs without a shell. If the tool does not expand
+`$WIFI_SSID` itself, wrap the command in bash:
+`bash -c 'tool --ssid "$WIFI_SSID"'`.
 
 !!! note "Empty output"
     If the command prints nothing, no secret is created.
+
+With `create_secret` set, the device command's `do` must be a single command
+(not a list) and its output must be a single line, or the job fails. The
+command's stderr is captured together with its stdout, so a tool that writes
+warnings there must redirect them inside a bash wrapper, e.g.
+`bash -c 'tool 2>/dev/null'`, or they end up in the secret.
+
+!!! note "Secret value length"
+    Masking replaces the secret value wherever it appears in the job log. A
+    very short value such as `1` or `OK` masks that substring across the whole
+    log, so pick a value long enough not to collide.
+
+`create_secret` works with the admin-defined and power commands listed below
+too.
 
 ## Device dictionary
 
