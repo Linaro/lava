@@ -1,8 +1,7 @@
 {# device_type = 'at91sam9g20ek' #}
 {% extends 'base-uboot.jinja2' %}
 
-{% set bootloader_prompt = "U-Boot>" %}
-{% set bootloader_prompt = bootloader_prompt|default('=>') %}
+{% set bootloader_prompt = bootloader_prompt|default('U-Boot>') %}
 
 {% set bootm_kernel_addr = '0x22100000' %}
 {% set bootm_ramdisk_addr = '0x23000000' %}
