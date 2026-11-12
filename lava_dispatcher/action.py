@@ -542,6 +542,7 @@ class Action:
         input: str | None = None,
         env: dict[str, str] | None = None,
         show_output: bool = True,
+        redact_output: bool = False,
     ) -> str:
         """
         Support for external command operations on the dispatcher with output handling,
@@ -561,7 +562,8 @@ class Action:
         :param: cwd - the current working directory for this command
         :param: input - input data to send to the command's stdin
         :param: env - environment variables to pass to the command
-        :return: On success (command exited zero), returns the command output.
+        :return: On success (command exited zero), returns the command output
+        (logged line by line, unless show_output is False).
         On failure (command exited non-zero and allow_fail not set)
           sets self.errors and raises self.command_exception
         """
@@ -613,6 +615,12 @@ class Action:
                 output = exc.output.strip()
             else:
                 output = str(exc)
+
+            if redact_output:
+                # a failing generator may still have printed the secret, so
+                # keep the returncode but hide the output from logs and
+                # results
+                output = "[output withheld]"
 
             errors.append(output)
             self.results = {"returncode": "%s" % returncode}
