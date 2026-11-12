@@ -5,12 +5,13 @@
 {% set console_device = console_device|default('ttyAMA3') %}
 {% set baud_rate = baud_rate|default('115200') %}
 {% set boot_character_delay = boot_character_delay|default(300) %}
+{% set fastboot_serial_number = fastboot_serial_number|default('0000000000') %}
+{% set flash_cmds_order = flash_cmds_order|default(['ptable', 'fastboot', 'nvme', 'boot', 'cache', 'system', 'userdata']) %}
 {% block body %}
 
 adb_serial_number: '{{ adb_serial_number|default('0000000000') }}'
-fastboot_serial_number: '{{ fastboot_serial_number|default('0000000000') }}'
+fastboot_serial_number: '{{ fastboot_serial_number }}'
 fastboot_options: {{ fastboot_options|default([]) }}
-flash_cmds_order: ['ptable', 'fastboot', 'nvme', 'boot', 'cache', 'system', 'userdata']
 
 actions:
   deploy:
