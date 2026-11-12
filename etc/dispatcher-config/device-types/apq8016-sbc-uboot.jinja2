@@ -9,7 +9,6 @@
 {% set extra_kernel_args = "debug loglevel=7" %}
 {% endif %}
 {% set bootloader_prompt = bootloader_prompt|default('=>') %}
-{% set booti_kernel_addr = '0x80080000' %}
 {% set booti_kernel_addr = booti_kernel_addr|default('0x80080000') %}
 {% set booti_ramdisk_addr = booti_ramdisk_addr|default('0x82e00000') %}
 {% set booti_dtb_addr = booti_dtb_addr|default('0x82000000') %}
