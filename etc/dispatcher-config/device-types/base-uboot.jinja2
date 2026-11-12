@@ -260,7 +260,9 @@ actions:
 {% endif %}
 {% if uboot_ums_flash %}
           uboot_ums_flash: {{ uboot_ums_flash }}
-          uboot_mass_storage_device: {{ uboot_mass_storage_device|default(None) }}
+{% if uboot_mass_storage_device %}
+          uboot_mass_storage_device: {{ uboot_mass_storage_device }}
+{% endif %}
 {% endif %}
 {% if uboot_set_mac %}
           lava_mac: {{ uboot_mac_addr }}
