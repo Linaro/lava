@@ -511,17 +511,22 @@ The serial number of the JLink probe or target board.
 
 ### QDL
 
-A QDL device is identified by two variables which have to be set together:
+A QDL device is identified by the following values:
 
-* `board_qdl_id` should be set to the serial number of the board and is passed
-  to `qdl` as `--serial` when flashing.
-* `board_id` should be set to the full USB product string (the `iProduct`
-  descriptor) the board advertises in EDL (Emergency Download) mode and is used
-  by LAVA to wait for the board to enumerate.
+* `board_qdl_id` is the serial number of the board. It is passed to `qdl` as
+  `--serial` when flashing.
+* `board_id` is the full USB product string (the `iProduct` descriptor) the
+  board advertises in EDL (Emergency Download) mode. LAVA uses it to wait for
+  the board to enumerate.
+* `board_jid` is the JTAG id of the board. It is optional and only used by
+  boards whose USB product string includes it, such as Shikra based boards.
 
-Both values can be determined with `lsusb`: boot the device into EDL
-(Emergency Download) mode, connect it to a Linux host over USB, then read the
-`iProduct` descriptor:
+Normally only `board_qdl_id` (and `board_jid`, where used) has to be set in
+the device dictionary. The QDL device-type templates build `board_id` from them
+and from the chipset id of the SoC (see [board_id](#board_id_1)).
+
+All values can be determined with `lsusb`: boot the device into EDL mode,
+connect it to a Linux host over USB, then read the `iProduct` descriptor:
 
 ```bash
 # lsusb -v -d 05c6:9008 | grep iProduct
@@ -529,26 +534,26 @@ Both values can be determined with `lsusb`: boot the device into EDL
 ```
 
 The whole string (`QUSB_BULK_CID:040E_SN:BA9B2FEB`) is the value of `board_id`,
-and the part following `_SN:` (`BA9B2FEB`) is the value of `board_qdl_id`.
+the part following `_SN:` (`BA9B2FEB`) is the value of `board_qdl_id` and the
+part following `CID:` (`040E`) is the chipset id.
 
 The format of the string is not the same on every board. Qualcomm reference
 boards use `QUSB_BULK_CID:<chipset id>_SN:<board serial number>`, while
-Shikra based boards report a longer string:
+Shikra based boards report a longer string that also contains the JTAG id:
 
 ```bash
 # lsusb -v -d 05c6:9008 | grep iProduct
   iProduct                2 F09_D0011_V1.0_CID:0488_SN:DB827C8D_JID:003690E1
 ```
 
-Here `board_id` is `F09_D0011_V1.0_CID:0488_SN:DB827C8D_JID:003690E1` and
-`board_qdl_id` is `DB827C8D`.
+Here `board_id` is `F09_D0011_V1.0_CID:0488_SN:DB827C8D_JID:003690E1`,
+`board_qdl_id` is `DB827C8D` and the JTAG id is `003690E1`.
 
 !!! warning
-    The chipset id (`CID:040E` and `CID:0488` above) depends on the SoC and
-    the surrounding string depends on the board. Never copy either from an
-    example or from another device type: always take them from the `lsusb`
-    output of the board being added, otherwise LAVA will wait for a device
-    which never appears and the job will fail with an infrastructure error.
+    Always compare the `lsusb` output of the board being added with the
+    `board_id` rendered from the device dictionary. If they differ, LAVA will
+    wait for a device which never appears and the job will fail with an
+    infrastructure error.
 
 #### board_qdl_id
 
@@ -560,6 +565,27 @@ The serial number of the board in EDL mode, taken from the part of the
 {% set board_qdl_id = 'BA9B2FEB' %}
 ```
 
+#### board_cid
+
+The chipset id, taken from the part of the `iProduct` descriptor following
+`CID:`. It depends on the SoC, so every QDL device-type template sets the
+correct value and the device dictionary doesn't need to. Set it only if
+the board reports a different chipset id than the device-type template.
+
+```jinja
+{% set board_cid = '040E' %}
+```
+
+#### board_jid
+
+Only used by Shikra based boards (`shikra-iqs-evk`). The JTAG id, taken
+from the part of the `iProduct` descriptor following `_JID:`. It differs
+between boards, so check it with `lsusb`. Defaults to `003690E1`.
+
+```jinja
+{% set board_jid = '003670E1' %}
+```
+
 #### board_id
 
 The full USB product string (the `iProduct` descriptor) the board advertises in
@@ -568,27 +594,33 @@ exactly this string before running `qdl`.
 
 Note that this is unlike every other device type, where `board_id` is the
 serial number of the board alone. For QDL device types the serial number is
-held in `board_qdl_id` instead and `board_id` is normally written in terms of
-it:
+held in `board_qdl_id` instead.
+
+If `board_id` is left unset,
+[`base-qdl.jinja2`](https://gitlab.com/lava/lava/-/blob/master/etc/dispatcher-config/device-types/base-qdl.jinja2)
+builds it as `QUSB_BULK_CID:<board_cid>_SN:<board_qdl_id>`, and
+`shikra-iqs-evk.jinja2` builds it as
+`F09_D0011_V1.0_CID:<board_cid>_SN:<board_qdl_id>_JID:<board_jid>`.
+Set `board_id` explicitly only when the board reports a string in a
+different format:
 
 ```jinja
 {% set board_qdl_id = 'BA9B2FEB' %}
 {% set board_id = "QUSB_BULK_CID:040E_SN:" + board_qdl_id %}
 ```
 
-For a Shikra based board, where the serial number is embedded in a longer
-string:
+#### device_info
+
+If [`device_info`](#device_info) is left unset, `base-qdl.jinja2` builds it
+from `board_id`, `fastboot_serial_number` and `board_qdl_id`, so the board is
+passed to the test container in EDL, fastboot and QDL mode:
 
 ```jinja
-{% set board_qdl_id = 'DB827C8D' %}
-{% set board_id = "F09_D0011_V1.0_CID:0488_SN:" + board_qdl_id + "_JID:003690E1" %}
+{% set device_info = [{'board_id': board_id}, {'board_id': fastboot_serial_number}, {'board_id': board_qdl_id}] %}
 ```
 
-If `board_id` is left unset,
-[`base-qdl.jinja2`](https://gitlab.com/lava/lava/-/blob/master/etc/dispatcher-config/device-types/base-qdl.jinja2)
-defaults it to `QUSB_BULK_CID:0420_SN:` followed by `board_qdl_id`. That
-default only matches boards whose chipset id happens to be `0420`, so set
-`board_id` explicitly unless the `lsusb` output confirms it.
+The fastboot serial number is left out when `fastboot_serial_number` is not
+set or is all zeros, for boards that don't boot to fastboot.
 
 #### qdl_enter_commands
 

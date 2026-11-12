@@ -112,6 +112,19 @@ in the JLink boot method.
     The variables needed in `jlink_options` block should be provided in device
     dictionary.
 
+### QDL
+
+`board_cid` must be set to the chipset id of the SoC. It is the part of the
+USB product string the board advertises in EDL mode that follows `CID:`, see
+[QDL](device-dictionary.md#qdl). `base-qdl.jinja2` uses it to build the default
+`board_id`, so device dictionaries only need to set `board_qdl_id`.
+
+```jinja
+{% extends 'base-qdl.jinja2' %}
+
+{% set board_cid = board_cid|default('046A') %}
+```
+
 ### Raspberry Pi 4b
 
 For the Raspberry Pi 4b, the device-type could look like the following. This
