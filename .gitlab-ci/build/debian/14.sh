@@ -5,6 +5,7 @@ set -e
 if [ "$1" = "setup" ]
 then
   apt-get build-dep --yes .
+  apt-get install --no-install-recommends --yes lintian
 else
   set -x
   # build the full package, including original source
@@ -23,4 +24,15 @@ else
   .gitlab-ci/build/debian/check-debian-contents.sh lava-dispatcher _build/lava-dispatcher_*forky*.deb
   .gitlab-ci/build/debian/check-debian-contents.sh lava-dispatcher-host _build/lava-dispatcher-host_*forky*.deb
   .gitlab-ci/build/debian/check-debian-contents.sh lava-server _build/lava-server_*forky*.deb
+
+  # Lint the build. share/debian-dev-build.sh turns the package native
+  # and adds a dev changelog entry, which triggers the suppressed source
+  # tags. They do not apply to real uploads.
+  # TODO: also fail on warnings (--fail-on error,warning) once the
+  # existing warnings, such as the obsolete libjs-bootstrap dependency,
+  # are fixed.
+  lintian --version
+  lintian --fail-on error --info \
+    --suppress-tags no-nmu-in-changelog,odd-historical-debian-changelog-version,source-nmu-has-incorrect-version-number \
+    _build/lava_*forky*_amd64.changes
 fi
