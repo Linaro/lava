@@ -519,7 +519,8 @@ A QDL device is identified by the following values:
   board advertises in EDL (Emergency Download) mode. LAVA uses it to wait for
   the board to enumerate.
 * `board_jid` is the JTAG id of the board. It is optional and only used by
-  boards whose USB product string includes it, such as Shikra based boards.
+  boards whose USB product string includes it, such as Shikra and Hawi based
+  boards.
 
 Normally only `board_qdl_id` (and `board_jid`, where used) has to be set in
 the device dictionary. The QDL device-type templates build `board_id` from them
@@ -578,9 +579,10 @@ the board reports a different chipset id than the device-type template.
 
 #### board_jid
 
-Only used by Shikra based boards (`shikra-iqs-evk`). The JTAG id, taken
-from the part of the `iProduct` descriptor following `_JID:`. It differs
-between boards, so check it with `lsusb`. Defaults to `003690E1`.
+Only used by Shikra (`shikra-iqs-evk`) and Hawi (`hawi-mtp`) based boards. The
+JTAG id, taken from the part of the `iProduct` descriptor following `_JID:`.
+It differs between boards, so check it with `lsusb`. Defaults to `003690E1`
+for `shikra-iqs-evk` and `003150E1` for `hawi-mtp`.
 
 ```jinja
 {% set board_jid = '003670E1' %}
@@ -598,9 +600,11 @@ held in `board_qdl_id` instead.
 
 If `board_id` is left unset,
 [`base-qdl.jinja2`](https://gitlab.com/lava/lava/-/blob/master/etc/dispatcher-config/device-types/base-qdl.jinja2)
-builds it as `QUSB_BULK_CID:<board_cid>_SN:<board_qdl_id>`, and
+builds it as `QUSB_BULK_CID:<board_cid>_SN:<board_qdl_id>`,
 `shikra-iqs-evk.jinja2` builds it as
-`F09_D0011_V1.0_CID:<board_cid>_SN:<board_qdl_id>_JID:<board_jid>`.
+`F09_D0011_V1.0_CID:<board_cid>_SN:<board_qdl_id>_JID:<board_jid>` and
+`hawi-mtp.jinja2` builds it as
+`QUSB_F:A_D:023_CID:<board_cid>_SN:<board_qdl_id>_JID:<board_jid>`.
 Set `board_id` explicitly only when the board reports a string in a
 different format:
 

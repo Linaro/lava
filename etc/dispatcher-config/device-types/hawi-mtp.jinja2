@@ -1,0 +1,8 @@
+{# device_type = 'hawi-mtp' #}
+{% extends 'base-qdl.jinja2' %}
+
+{% set board_cid = board_cid|default('047E') %}
+{# the EDL USB product string includes the board JTAG ID #}
+{% set board_jid = board_jid|default('003150E1') %}
+{% set board_qdl_id = board_qdl_id|default('00000000') %}
+{% set board_id = board_id|default("QUSB_F:A_D:023_CID:" + board_cid + "_SN:" + board_qdl_id + "_JID:" + board_jid) %}
