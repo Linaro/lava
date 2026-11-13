@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 
 from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.shell import which
@@ -39,7 +38,6 @@ class BootQDLRetry(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(ConnectDevice(self.job))
         self.pipeline.add_action(ResetDevice(self.job))
         self.pipeline.add_action(EnterQDL(self.job))
         self.pipeline.add_action(WaitQDLDeviceAction(self.job))
