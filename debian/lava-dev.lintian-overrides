@@ -1,0 +1,3 @@
+# lava-dev needs the same Bootstrap 3 as lava-server, whose web UI is
+# written against it (see share/javascript.yaml).
+lava-dev: depends-on-obsolete-bootstrap

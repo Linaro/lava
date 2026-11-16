@@ -1,2 +1,6 @@
 # Minified upstream JavaScript shipped in the source tree.
 lava source: source-is-missing [lava_results_app/static/lava_results_app/js/jquery.flot.navigate.js]
+# The web UI is written against Bootstrap 3 and uses the system copy from
+# libjs-bootstrap (see share/javascript.yaml). Moving to a newer Bootstrap
+# needs the UI ported first.
+lava source: build-depends-on-obsolete-bootstrap

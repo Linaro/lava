@@ -4,3 +4,9 @@
 # currently done in Debian packaging.
 lava-server: duplicate-font-file also in (fonts-glyphicons-halflings fonts-glyphicons-halflings) [usr/lib/python3/dist-packages/lava_server/static/lava_server/fonts/glyphicons-halflings-regular.ttf]
 lava-server: truetype-font-prohibits-installable-embedding (preview/print only) [usr/lib/python3/dist-packages/lava_server/static/lava_server/fonts/glyphicons-halflings-regular.ttf]
+lava-server: font-in-non-font-package [usr/lib/python3/dist-packages/lava_server/static/lava_server/fonts/glyphicons-halflings-regular.*]
+lava-server: woff-font-in-wrong-dir [usr/lib/python3/dist-packages/lava_server/static/lava_server/fonts/glyphicons-halflings-regular.*]
+# The web UI is written against Bootstrap 3 and uses the system copy from
+# libjs-bootstrap (see share/javascript.yaml). Moving to a newer Bootstrap
+# needs the UI ported first.
+lava-server: depends-on-obsolete-bootstrap
