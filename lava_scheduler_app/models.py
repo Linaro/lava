@@ -11,6 +11,7 @@ import datetime
 import gzip
 import logging
 import os
+import re
 import uuid
 from fnmatch import fnmatch
 from json import dump as json_dump
@@ -34,7 +35,8 @@ from django.http import Http404
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import get_random_string
-from django.utils.html import escape
+from django.utils.html import escape, format_html
+from django.utils.safestring import SafeString, mark_safe
 from django.utils.translation import gettext_lazy
 from jinja2 import FileSystemLoader
 from jinja2 import TemplateError as JinjaTemplateError
@@ -2915,6 +2917,13 @@ class LavaLogFlag(models.IntegerChoices):
     DELETION = 3, "Deletion"
 
 
+# Job link written into health transitions by Device.testjob_signal.
+JOB_LINK_PATTERN = re.compile(
+    r'<a href="[^"<>]*/scheduler/job/(?P<job_id>[0-9]+(?:\.[0-9]+)?)"'
+    r' title="[^"<>]*">(?P=job_id)</a>'
+)
+
+
 class LavaLogEntryBase(models.Model):
     # Field names copied from LogEntry for compatibility with existing code
     id = models.BigAutoField(primary_key=True)
@@ -2940,6 +2949,28 @@ class LavaLogEntryBase(models.Model):
 
     def get_change_message(self) -> str:
         return self.change_message
+
+    def get_change_message_html(self) -> SafeString:
+        # Messages are stored raw, but the scheduler embeds a job link in
+        # the health-check transitions (see Device.testjob_signal). Keep
+        # those links clickable and escape everything else. The link is
+        # rebuilt from the job id alone, so a reason that mimics it can
+        # only ever produce a link to a job.
+        parts = []
+        last = 0
+        for match in JOB_LINK_PATTERN.finditer(self.change_message):
+            parts.append(escape(self.change_message[last : match.start()]))
+            job_id = match["job_id"]
+            parts.append(
+                format_html(
+                    '<a href="{}" title="Test job summary">{}</a>',
+                    reverse("lava.scheduler.job.detail", args=[job_id]),
+                    job_id,
+                )
+            )
+            last = match.end()
+        parts.append(escape(self.change_message[last:]))
+        return mark_safe("".join(parts))  # nosec - every part is escaped
 
     class Meta:
         abstract = True

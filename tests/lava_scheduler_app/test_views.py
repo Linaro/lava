@@ -1425,6 +1425,57 @@ def test_device_health_reason_xss_not_rendered(client, setup):
 
 
 @pytest.mark.django_db
+def test_device_health_reason_health_check_link(client, setup):
+    device = Device.objects.get(hostname="qemu01")
+    device.health = Device.HEALTH_GOOD
+    device.save()
+    job = TestJob.objects.create(
+        description="health check",
+        submitter=User.objects.get(username="admin"),
+        requested_device_type=device.device_type,
+        actual_device=device,
+        health_check=True,
+        state=TestJob.STATE_FINISHED,
+        health=TestJob.HEALTH_INCOMPLETE,
+    )
+    device.testjob_signal("go_state_finished", job)
+    device.save()
+
+    assert client.login(username="admin", password="admin") is True
+    page = client.get(reverse("lava.scheduler.device.detail", args=[device.hostname]))
+    assert page.status_code == 200
+    content = page.content.decode()
+    # The job link the scheduler writes must render as a link, in the
+    # health-reason banner and in the device log table.
+    link = f'<a href="{job.get_absolute_url()}" title="Test job summary">{job.pk}</a>'
+    assert content.count(link) == 2
+    assert "&lt;a href=" not in content
+
+
+@pytest.mark.django_db
+def test_device_health_reason_link_lookalike_escaped(client, setup):
+    device = Device.objects.get(hostname="qemu01")
+    assert client.login(username="admin", password="admin") is True
+    reason = (
+        '<a href="javascript:alert(1)//scheduler/job/1" title="x">1</a>'
+        '<a href="/scheduler/job/1" title="x" onclick="alert(1)">1</a>'
+    )
+    ret = client.post(
+        reverse("lava.scheduler.device.health", kwargs={"pk": device.hostname}),
+        {"health": "bad", "reason": reason},
+    )
+    assert ret.status_code == 302
+    page = client.get(reverse("lava.scheduler.device.detail", args=[device.hostname]))
+    assert page.status_code == 200
+    content = page.content.decode()
+    # Only the job id survives from a lookalike link, anything else is
+    # either dropped or escaped.
+    assert 'href="javascript:' not in content
+    assert 'onclick="' not in content
+    assert "onclick=&quot;alert(1)&quot;" in content
+
+
+@pytest.mark.django_db
 def test_username_list_json_no_auth(client, setup):
     ret = client.get(reverse("lava.scheduler.username_list_json"), {"term": "t"})
     assert ret.status_code == 403  # nosec

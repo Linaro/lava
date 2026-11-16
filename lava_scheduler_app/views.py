@@ -2465,7 +2465,7 @@ def device_detail(request, pk):
     device_can_change = device.can_change(request.user)
     latest_device_log = device_logs.first()
     device_health_reason = (
-        latest_device_log.get_change_message() if latest_device_log else None
+        latest_device_log.get_change_message_html() if latest_device_log else None
     )
     return render(
         request,

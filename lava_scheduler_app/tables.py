@@ -411,9 +411,8 @@ class LogEntryTable(LavaTable):
         return render_user_display(record.user)
 
     def render_change_message(self, record):
-        message = record.get_change_message()
+        message = record.get_change_message_html()
         if record.is_change():
-            # Stored raw; django_tables2 auto-escapes on render.
             return message
         elif record.is_addition():
             return format_html(
