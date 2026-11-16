@@ -28,11 +28,8 @@ else
   # Lint the build. share/debian-dev-build.sh turns the package native
   # and adds a dev changelog entry, which triggers the suppressed source
   # tags. They do not apply to real uploads.
-  # TODO: also fail on warnings (--fail-on error,warning) once the
-  # existing warnings, such as the obsolete libjs-bootstrap dependency,
-  # are fixed.
   lintian --version
-  lintian --fail-on error --info \
+  lintian --fail-on error,warning --info \
     --suppress-tags no-nmu-in-changelog,odd-historical-debian-changelog-version,source-nmu-has-incorrect-version-number \
     _build/lava_*forky*_amd64.changes
 fi

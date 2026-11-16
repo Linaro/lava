@@ -31,11 +31,8 @@ else
   # trixie's lintian is older than the packaging: it does not know the
   # newer tags used in overrides (alien-tag) and flags debian/watch,
   # Standards-Version and Priority, which newer lintian accepts.
-  # TODO: also fail on warnings (--fail-on error,warning) once the
-  # existing warnings, such as the obsolete libjs-bootstrap dependency,
-  # are fixed.
   lintian --version
-  lintian --fail-on error --info \
+  lintian --fail-on error,warning --info \
     --suppress-tags no-nmu-in-changelog,odd-historical-debian-changelog-version,source-nmu-has-incorrect-version-number \
     --suppress-tags alien-tag,debian-watch-file-in-native-package,missing-debian-watch-file-standard,newer-standards-version,recommended-field \
     _build/lava_*trixie*_amd64.changes
