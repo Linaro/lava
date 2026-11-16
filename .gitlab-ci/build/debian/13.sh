@@ -27,13 +27,16 @@ else
 
   # Lint the build. share/debian-dev-build.sh turns the package native
   # and adds a dev changelog entry, which triggers the suppressed source
-  # tags. They do not apply to real uploads.
+  # tags. The entry is dated by the last commit, which can predate the
+  # previous release entry, so the changelog date tags are suppressed
+  # too. None of these apply to real uploads.
   # trixie's lintian is older than the packaging: it does not know the
   # newer tags used in overrides (alien-tag) and flags debian/watch,
   # Standards-Version and Priority, which newer lintian accepts.
   lintian --version
   lintian --fail-on error,warning --info \
     --suppress-tags no-nmu-in-changelog,odd-historical-debian-changelog-version,source-nmu-has-incorrect-version-number \
+    --suppress-tags latest-changelog-entry-without-new-date,latest-debian-changelog-entry-without-new-date \
     --suppress-tags alien-tag,debian-watch-file-in-native-package,missing-debian-watch-file-standard,newer-standards-version,recommended-field \
     _build/lava_*trixie*_amd64.changes
 fi
