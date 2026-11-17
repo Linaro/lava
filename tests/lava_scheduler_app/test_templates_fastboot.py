@@ -356,3 +356,23 @@ class TestFastbootTemplates(BaseTemplateTest):
         for cmd in template_dict["flash_cmds_order"]:
             idx = template_dict["flash_cmds_order"].index(cmd)
             self.assertEqual(cmd, fastboot_cmd_order[idx])
+
+    def test_qcs6490_rb3gen2_usbg_ms(self):
+        data = """{% extends 'qcs6490-rb3gen2.jinja2' %}
+{% set usbg_ms_commands = {
+    'disable': ['laacli', 'usbg-ms', 'off'],
+    'enable': ['laacli', 'usbg-ms', 'on', '{IMAGE}'],
+} %}
+"""
+        template_dict = self.render_device_dictionary_from_text(data)
+        self.assertEqual(
+            {
+                "disable": ["laacli", "usbg-ms", "off"],
+                "enable": ["laacli", "usbg-ms", "on", "{IMAGE}"],
+            },
+            template_dict["actions"]["deploy"]["methods"]["usbg-ms"],
+        )
+
+        data = """{% extends 'qcs6490-rb3gen2.jinja2' %}"""
+        template_dict = self.render_device_dictionary_from_text(data)
+        self.assertNotIn("usbg-ms", template_dict["actions"]["deploy"]["methods"])

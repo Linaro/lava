@@ -24,6 +24,11 @@ actions:
       flasher:
         commands: {{ flasher_deploy_commands|yaml_quote }}
 {% endif %}
+{% if usbg_ms_commands %}
+      usbg-ms:
+        enable: {{ usbg_ms_commands["enable"] }}
+        disable: {{ usbg_ms_commands["disable"] }}
+{% endif %}
       qdl:
     connections:
       adb:
