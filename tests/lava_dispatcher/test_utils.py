@@ -4,9 +4,11 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+import ast
 import os
 import subprocess  # nosec - unit test support.
 import unittest
+from pathlib import Path
 
 import pytest
 
@@ -227,6 +229,64 @@ def test_description_exists():
             continue
         if subclass.name not in ALLOWED:
             assert hasattr(subclass, "description")
+
+
+# Shared namespaces, not tied to a class `name`.
+# apply-overlay has no writer, it is a dead read.
+SHARED_NAMESPACES = {
+    "apply-overlay",
+    "boot",
+    "interrupt",
+    "optional_container_action",
+    "shared",
+    "test",
+    "uuid",
+}
+
+
+def test_namespace_data_action_literals_are_greppable():
+    """Check that every literal action= used with get/set_namespace_data
+    matches a class name attribute or a shared namespace. Otherwise a class
+    rename would make get_namespace_data return None at runtime."""
+    src = Path(__file__).resolve().parents[2] / "lava_dispatcher"
+    class_names = set()
+    literals = {}
+    for path in src.rglob("*.py"):
+        tree = ast.parse(path.read_text(), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                for stmt in node.body:
+                    if (
+                        isinstance(stmt, ast.Assign)
+                        and any(
+                            isinstance(t, ast.Name) and t.id == "name"
+                            for t in stmt.targets
+                        )
+                        and isinstance(stmt.value, ast.Constant)
+                        and isinstance(stmt.value.value, str)
+                    ):
+                        class_names.add(stmt.value.value)
+            elif (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr in ("get_namespace_data", "set_namespace_data")
+            ):
+                for kw in node.keywords:
+                    if (
+                        kw.arg == "action"
+                        and isinstance(kw.value, ast.Constant)
+                        and isinstance(kw.value.value, str)
+                    ):
+                        literals.setdefault(kw.value.value, []).append(
+                            f"{path.name}:{node.lineno}"
+                        )
+    assert literals, f"no namespace callsites found under {src}"
+    drift = {
+        value: where
+        for value, where in literals.items()
+        if value not in class_names and value not in SHARED_NAMESPACES
+    }
+    assert not drift, f"action= literals matching no class name: {drift}"
 
 
 @replace_exception(RuntimeError, JobError)
