@@ -1,1 +1,8 @@
-{% extends 'n1sdp.jinja2' %}
+{# device_type = 'morello' #}
+{% extends 'base-flasher.jinja2' %}
+
+{% set deploy_character_delay = deploy_character_delay|default(30) %}
+{% set boot_character_delay = boot_character_delay|default(30) %}
+{% set test_character_delay = test_character_delay|default(boot_character_delay) %}
+{% set action_timeout_auto_login = action_timeout_auto_login|default(5) %}
+{% set connection_timeout_auto_login = connection_timeout_auto_login|default(5) %}

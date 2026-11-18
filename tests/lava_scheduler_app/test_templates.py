@@ -307,6 +307,92 @@ class TestTemplates(BaseTemplateTest):
         template_dict = self.render_device_dictionary_from_text(data)
         self.assertIsNone(template_dict["actions"]["deploy"]["methods"])
 
+    def test_base_flasher_sdmux(self):
+        data = """{% extends 'base-flasher.jinja2' %}
+{% set connection_command = 'telnet localhost 2000' %}
+{% set usb_filesystem_label = 'board01' %}
+{% set sdmux_disk = '/dev/disk/by-id/usb-LinuxAut_sdmux_HS-SD_MMC_000000000100-0:0' %}
+{% set sdmux_command_dut = 'usbsdmux /dev/usb-sd-mux/id-000000000100 dut' %}
+{% set sdmux_command_host = 'usbsdmux /dev/usb-sd-mux/id-000000000100 host' %}"""
+        template_dict = self.render_device_dictionary_from_text(data)
+        disk = "/dev/disk/by-id/usb-LinuxAut_sdmux_HS-SD_MMC_000000000100-0:0"
+        self.assertEqual(
+            template_dict["actions"]["deploy"]["methods"]["flasher"]["commands"],
+            [
+                "usbsdmux /dev/usb-sd-mux/id-000000000100 host",
+                "sleep 5",
+                f'bash -c "umount {disk}-part1 || true"',
+                f"mkfs.vfat -n board01 {disk}-part1",
+                "mkdir -p /tmp/board01",
+                f"mount {disk}-part1 /tmp/board01",
+                "unzip -d /tmp/board01 {RECOVERY_IMAGE}",
+                f"umount {disk}-part1",
+                "sleep 1",
+                "usbsdmux /dev/usb-sd-mux/id-000000000100 dut",
+                "sleep 5",
+            ],
+        )
+        self.assertEqual(
+            list(template_dict["actions"]["deploy"]["methods"]), ["flasher"]
+        )
+        self.assertEqual(list(template_dict["actions"]["boot"]["methods"]), ["minimal"])
+
+    def test_base_flasher_sdmux_commands_override(self):
+        data = """{% extends 'base-flasher.jinja2' %}
+{% set connection_command = 'telnet localhost 2000' %}
+{% set usb_filesystem_label = 'board01' %}
+{% set sdmux_disk = '/dev/disk/by-id/usb-LinuxAut_sdmux_HS-SD_MMC_000000000100-0:0' %}
+{% set sdmux_command_dut = 'usbsdmux /dev/usb-sd-mux/id-000000000100 dut' %}
+{% set sdmux_command_host = 'usbsdmux /dev/usb-sd-mux/id-000000000100 host' %}
+{% set flasher_deploy_commands = ['flash {RECOVERY_IMAGE}'] %}"""
+        template_dict = self.render_device_dictionary_from_text(data)
+        self.assertEqual(
+            template_dict["actions"]["deploy"]["methods"]["flasher"]["commands"],
+            ["flash {RECOVERY_IMAGE}"],
+        )
+
+    def test_base_flasher_usb(self):
+        data = """{% extends 'base-flasher.jinja2' %}
+{% set connection_command = 'telnet localhost 2000' %}
+{% set usb_label = 'usb_storage_device' %}
+{% set usb_uuid = 'A301-44DD' %}
+{% set usb_device_id = 0 %}"""
+        template_dict = self.render_device_dictionary_from_text(data)
+        self.assertEqual(list(template_dict["actions"]["deploy"]["methods"]), ["usb"])
+        self.assertEqual(
+            template_dict["parameters"]["media"]["usb"],
+            {"usb_storage_device": {"uuid": "A301-44DD", "device_id": "0"}},
+        )
+
+    def test_n1sdp_morello(self):
+        for device_type in ["n1sdp", "morello"]:
+            with self.subTest(device_type=device_type):
+                data = f"""{{% extends '{device_type}.jinja2' %}}
+{{% set connection_command = 'telnet localhost 2000' %}}
+{{% set flasher_deploy_commands = ['flash {{RECOVERY_IMAGE}}'] %}}"""
+                template_dict = self.render_device_dictionary_from_text(data)
+                self.assertEqual(
+                    template_dict["actions"]["deploy"]["methods"]["flasher"][
+                        "commands"
+                    ],
+                    ["flash {RECOVERY_IMAGE}"],
+                )
+                self.assertEqual(
+                    list(template_dict["actions"]["boot"]["methods"]), ["minimal"]
+                )
+                self.assertEqual(
+                    template_dict["character_delays"],
+                    {"deploy": 30, "boot": 30, "test": 30},
+                )
+                self.assertEqual(
+                    template_dict["timeouts"]["actions"]["auto-login-action"],
+                    {"minutes": 5},
+                )
+                self.assertEqual(
+                    template_dict["timeouts"]["connections"]["auto-login-action"],
+                    {"minutes": 5},
+                )
+
     def test_base_stm_mcu(self):
         data = """{% extends 'base-stm-mcu.jinja2' %}
 {% set connection_command = 'telnet localhost 2000' %}
