@@ -5,11 +5,59 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import time
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from lava_dispatcher.worker import Job, ServerUnavailable, VersionMismatch, get_job_data
+from lava_dispatcher import worker
+from lava_dispatcher.worker import (
+    Job,
+    ServerUnavailable,
+    VersionMismatch,
+    get_job_data,
+    start_job,
+)
+
+
+def test_start_job_registers_configured_download_dir(tmp_path, monkeypatch):
+    download_dir = tmp_path / "dl"
+    monkeypatch.setattr(worker, "tmp_dir", tmp_path / "tmp")
+    monkeypatch.setattr(worker, "STALE_CONFIG", dict(worker.STALE_CONFIG))
+    with patch("lava_dispatcher.worker.subprocess.Popen") as popen:
+        pid = start_job(
+            "http://example.com",
+            "token",
+            123,
+            "pipeline: []",
+            "device_type: test",
+            f"dispatcher_download_dir: {download_dir}",
+            "",
+            "",
+            10,
+        )
+    assert pid is not None
+    assert popen.call_args[0][0][0] == "lava-run"
+    assert worker.STALE_CONFIG[download_dir] == "{prefix}{job_id}"
+    assert download_dir.is_dir()
+
+
+def test_start_job_forwards_download_dir_override(tmp_path, monkeypatch):
+    monkeypatch.setattr(worker, "tmp_dir", tmp_path / "tmp")
+    monkeypatch.setattr(worker, "download_dir", Path("/srv/dl"))
+    with patch("lava_dispatcher.worker.subprocess.Popen") as popen:
+        start_job(
+            "http://example.com",
+            "token",
+            123,
+            "pipeline: []",
+            "device_type: test",
+            "prefix: x-",
+            "",
+            "",
+            10,
+        )
+    assert "--dispatcher-download-dir=/srv/dl" in popen.call_args[0][0]
 
 
 @pytest.fixture

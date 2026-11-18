@@ -34,7 +34,7 @@ import sentry_sdk
 import yaml
 
 from lava_common.constants import WORKER_DIR as _WORKER_DIR_STR
-from lava_common.download import resolve_download_dir
+from lava_common.download import dispatcher_download_dir, resolve_download_dir
 from lava_common.exceptions import LAVABug
 from lava_common.version import __version__
 from lava_common.worker import get_parser, init_sentry_sdk
@@ -178,6 +178,14 @@ def start_job(
     dispatcher_cfg = yaml_safe_load(dispatcher)
     base_dir = tmp_dir / f"{get_prefix(dispatcher_cfg)}{job_id}"
     base_dir.mkdir(mode=0o755, exist_ok=True, parents=True)
+
+    # main() only registers the command line override. A directory configured
+    # in dispatcher.yaml must be registered here too or cleanup_job never
+    # sweeps it and leftovers accumulate until the disk is full.
+    job_download_dir = Path(dispatcher_download_dir(dispatcher_cfg))
+    if job_download_dir not in STALE_CONFIG:
+        job_download_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
+        STALE_CONFIG[job_download_dir] = "{prefix}{job_id}"
 
     # Write back the job, device and dispatcher configuration
     (base_dir / "job.yaml").write_text(definition, encoding="utf-8")
