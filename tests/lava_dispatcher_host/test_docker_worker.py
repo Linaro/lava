@@ -383,7 +383,7 @@ class TestOptions:
         assert "--dispatcher-download-dir" not in ret
 
     def test_filter_options_dispatcher_download_dir_unavailable(
-        self, options, docker_image, mocker, tmp_path
+        self, options, docker_image, mocker, tmp_path, caplog
     ):
         mocker.patch(
             "lava_dispatcher_host.docker_worker.get_options",
@@ -398,3 +398,4 @@ class TestOptions:
             options, docker_image.name
         )
         assert "--dispatcher-download-dir" not in ret
+        assert "does not support --dispatcher-download-dir" in caplog.text

@@ -88,3 +88,58 @@ class TestLavaRun(TestCase):
         self.assertEqual(
             {type(h) for h in logger.handlers}, {YAMLFileHandler, YAMLStderrHandler}
         )
+
+    def test_dispatcher_config_download_dir(self) -> None:
+        arg_parser = parser()
+
+        temp_dir_name = self.enterContext(TemporaryDirectory())
+        temp_dir_path = Path(temp_dir_name)
+        cfg_dir = temp_dir_path / "dl"
+        dispatcher_yaml_path = temp_dir_path / "dispatcher.yaml"
+        dispatcher_yaml_path.write_text(
+            f"dispatcher_download_dir: {cfg_dir}\n", encoding="utf-8"
+        )
+
+        options = arg_parser.parse_args(
+            [
+                "--job-id=12345",
+                f"--output-dir={temp_dir_name}",
+                f"--device={temp_dir_path / 'device.yaml'}",
+                f"--dispatcher={dispatcher_yaml_path}",
+                str(temp_dir_path / "job.yaml"),
+            ]
+        )
+
+        logger = setup_logger(options, load_dispatcher_config(options))
+        self.addCleanup(logger.close)
+
+        self.assertTrue(list(cfg_dir.glob("*12345")))
+
+    def test_download_dir_flag_overrides_config(self) -> None:
+        arg_parser = parser()
+
+        temp_dir_name = self.enterContext(TemporaryDirectory())
+        temp_dir_path = Path(temp_dir_name)
+        cfg_dir = temp_dir_path / "dl-from-config"
+        cli_dir = temp_dir_path / "dl-from-cli"
+        dispatcher_yaml_path = temp_dir_path / "dispatcher.yaml"
+        dispatcher_yaml_path.write_text(
+            f"dispatcher_download_dir: {cfg_dir}\n", encoding="utf-8"
+        )
+
+        options = arg_parser.parse_args(
+            [
+                "--job-id=12345",
+                f"--output-dir={temp_dir_name}",
+                f"--device={temp_dir_path / 'device.yaml'}",
+                f"--dispatcher={dispatcher_yaml_path}",
+                f"--dispatcher-download-dir={cli_dir}",
+                str(temp_dir_path / "job.yaml"),
+            ]
+        )
+
+        logger = setup_logger(options, load_dispatcher_config(options))
+        self.addCleanup(logger.close)
+
+        self.assertTrue(list(cli_dir.glob("*12345")))
+        self.assertFalse(list(cfg_dir.glob("*")))

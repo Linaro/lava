@@ -226,6 +226,10 @@ def start_job(
         proc = subprocess.Popen(
             args, stdout=out_file, stderr=err_file, env=env, process_group=0
         )
+        if not debug:
+            # the child inherited its own copies of the fds; drop ours
+            out_file.close()
+            err_file.close()
         return proc.pid
     except Exception as exc:  # pylint: disable=broad-except
         LOG.error("[%d] Unable to start: %s", job_id, args)
