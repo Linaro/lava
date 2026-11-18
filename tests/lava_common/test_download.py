@@ -11,6 +11,7 @@ from pathlib import Path
 from lava_common.download import (
     DEFAULT_DOWNLOAD_DIR,
     dispatcher_download_dir,
+    relative_to_download_dir,
     resolve_download_dir,
 )
 
@@ -79,3 +80,9 @@ def test_config_empty_key():
     assert dispatcher_download_dir({"dispatcher_download_dir": None}) == str(
         DEFAULT_DOWNLOAD_DIR
     )
+
+
+def test_relative_to_download_dir():
+    assert relative_to_download_dir("/srv/dl/a/b", "/srv/dl") == "a/b"
+    # a sibling directory sharing the name prefix is not inside it
+    assert relative_to_download_dir("/srv/dl-archive/a", "/srv/dl") is None

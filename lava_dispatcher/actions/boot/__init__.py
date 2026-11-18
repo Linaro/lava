@@ -18,6 +18,7 @@ from lava_common.constants import (
     LOGIN_INCORRECT_MSG,
     LOGIN_TIMED_OUT_MSG,
 )
+from lava_common.download import relative_to_download_dir
 from lava_common.exceptions import (
     ConfigurationError,
     InfrastructureError,
@@ -761,9 +762,9 @@ class OverlayUnpack(Action):
             if not overlay_full_path:
                 raise JobError("No overlay file identified for the transfer.")
             download_dir = self.job.download_dir
-            if not overlay_full_path.startswith(download_dir):
+            overlay_path = relative_to_download_dir(overlay_full_path, download_dir)
+            if overlay_path is None:
                 raise ConfigurationError(f"overlay should already be in {download_dir}")
-            overlay_path = overlay_full_path[len(download_dir) + 1 :]
             overlay = os.path.basename(overlay_path)
 
             connection.sendline("rm %s" % overlay, delay=self.character_delay)

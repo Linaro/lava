@@ -47,3 +47,16 @@ def dispatcher_download_dir(dispatcher_config: dict[str, Any] | None) -> str:
     if not isinstance(dispatcher_config, dict):
         return str(resolve_download_dir())
     return str(resolve_download_dir(dispatcher_config.get("dispatcher_download_dir")))
+
+
+def relative_to_download_dir(path: str | Path, download_dir: str | Path) -> str | None:
+    """
+    Path of a job artifact relative to the download directory, used to build
+    the http url served by the dispatcher.
+
+    Returns None when the path is not inside the download directory.
+    """
+    prefix = str(download_dir).rstrip("/") + "/"
+    if not str(path).startswith(prefix):
+        return None
+    return str(path)[len(prefix) :]

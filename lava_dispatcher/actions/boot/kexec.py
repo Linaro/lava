@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from lava_common.download import relative_to_download_dir
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, OverlayUnpack
@@ -65,8 +66,11 @@ class KexecAction(Action):
         if path is None:
             raise JobError(f"Missing {key!r} in deploy stage")
 
-        path = path[len(self.job.download_dir) + 1 :]
-        cmd = f"wget http://{ip_addr}/tmp/{path} -O {self.parameters[key]}"
+        rel_path = relative_to_download_dir(path, self.job.download_dir)
+        if rel_path is None:
+            raise JobError(f"{path} is not in the job download directory")
+
+        cmd = f"wget http://{ip_addr}/tmp/{rel_path} -O {self.parameters[key]}"
         self.deploy_commands.append(cmd)
 
     def validate(self):
