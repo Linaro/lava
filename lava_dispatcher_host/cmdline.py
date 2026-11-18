@@ -167,7 +167,8 @@ def main(argv: list[str]) -> int:
             type=Path,
             default=None,
             help="Directory for the job temporary files, as configured with the "
-            "dispatcher_download_dir key of the dispatcher configuration",
+            "dispatcher_download_dir key of the dispatcher configuration. "
+            "Ignored with --remote, the host uses its own configuration.",
         )
 
     # shared options between "devices share" and "devices map"
