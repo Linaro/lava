@@ -39,6 +39,11 @@ Sentry Data Source Name.
 .BI --worker-dir " DIR"
 Path to data storage.
 .TP
+.BI --dispatcher-download-dir " DIR"
+Path to the job temporary files, overriding the
+.I dispatcher_download_dir
+key of the dispatcher configuration.
+.TP
 .BI --build-dir " DIR"
 Path to a directory containing a Dockerfile used to build a customised
 lava-dispatcher Docker image.
