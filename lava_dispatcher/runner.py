@@ -140,14 +140,13 @@ def load_dispatcher_config(options: argparse.Namespace) -> Any:
     return config
 
 
-def setup_logger(options: argparse.Namespace) -> YAMLLogger:
+def setup_logger(options: argparse.Namespace, dispatcher_cfg: Any) -> YAMLLogger:
     # The logger can be used by the parser and the Job object in all phases.
     logger = YAMLLogger()
     # Save logs to a file for debugging/post-processing.
     log_file = options.output_dir / "logs.yaml"
     logger.add_file_handler(log_file)
 
-    dispatcher_cfg = load_dispatcher_config(options)
     prefix = get_prefix(dispatcher_cfg)
     # Create the symlink for downloading via http
     # SymLinks is allowed in the apache2 lava-dispatcher.conf
@@ -175,7 +174,9 @@ def setup_logger(options: argparse.Namespace) -> YAMLLogger:
     return logger
 
 
-def parse_job_file(options: argparse.Namespace, logger: YAMLLogger) -> Job:
+def parse_job_file(
+    options: argparse.Namespace, logger: YAMLLogger, dispatcher_cfg: Any
+) -> Job:
     """
     Uses the parsed device_config instead of the old Device class
     so it can fail before the Pipeline is made.
@@ -189,7 +190,6 @@ def parse_job_file(options: argparse.Namespace, logger: YAMLLogger) -> Job:
     env_dut = None
     if options.env_dut is not None:
         env_dut = options.env_dut.read_text(encoding="utf-8")
-    dispatcher_cfg = load_dispatcher_config(options)
     dispatcher_config = None
     if dispatcher_cfg is not None:
         dispatcher_config = yaml_safe_dump(dispatcher_cfg)
@@ -251,8 +251,11 @@ def main() -> int:
     except OSError:
         raise InfrastructureError("Unable to create %s" % options.output_dir)
 
+    # Load once, the prefix and the job must agree on the same configuration
+    dispatcher_cfg = load_dispatcher_config(options)
+
     # Setup the logger as early as possible
-    logger = setup_logger(options)
+    logger = setup_logger(options, dispatcher_cfg)
     if not logger:
         print("lava-run failed to setup logging")
         return 1
@@ -270,7 +273,7 @@ def main() -> int:
         signal.signal(signal.SIGUSR2, cancelling_handler)
 
         # Parse the definition and create the job object
-        job = parse_job_file(options, logger)
+        job = parse_job_file(options, logger, dispatcher_cfg)
 
         # Add secrets to the environment
         for k, v in job.secrets.iterate():

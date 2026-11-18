@@ -17,7 +17,7 @@ from lava_common.log import (
     YAMLStderrHandler,
     run_output_sender,
 )
-from lava_dispatcher.runner import parser, setup_logger
+from lava_dispatcher.runner import load_dispatcher_config, parser, setup_logger
 
 
 class TestLavaRun(TestCase):
@@ -44,7 +44,7 @@ class TestLavaRun(TestCase):
 
         multiprocess_mock = self.enterContext(patch("lava_common.log.multiprocessing"))
 
-        logger = setup_logger(options)
+        logger = setup_logger(options, load_dispatcher_config(options))
         self.addCleanup(logger.close)
 
         self.assertIsInstance(logger, YAMLLogger)
@@ -82,7 +82,7 @@ class TestLavaRun(TestCase):
             ]
         )
 
-        logger = setup_logger(options)
+        logger = setup_logger(options, load_dispatcher_config(options))
         self.addCleanup(logger.close)
 
         self.assertEqual(
