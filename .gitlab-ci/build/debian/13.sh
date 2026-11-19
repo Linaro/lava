@@ -4,6 +4,7 @@ set -e
 
 if [ "$1" = "setup" ]
 then
+  apt-get -q update
   apt-get build-dep --yes .
   apt-get install --no-install-recommends --yes lintian
 else
