@@ -10,7 +10,9 @@
 # means changing the two servers as well, on the worker:
 # - the apache Alias, see /usr/share/lava-dispatcher/apache2/lava-dispatcher.conf
 # - the exported path in /etc/exports.d/lava-dispatcher-nfs.exports
-# A relative path is resolved when the configuration is read.
+# Use an absolute path: a relative path is resolved when the configuration is
+# read, against the working directory of the process, which is not the same
+# inside a container as on the host.
 # Can also be set with the --dispatcher-download-dir option of lava-worker,
 # which overrides this key.
 #dispatcher_download_dir: /var/lib/lava/dispatcher/tmp
