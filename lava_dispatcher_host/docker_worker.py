@@ -95,6 +95,14 @@ def filter_options(options: Any, image: str) -> list[str]:
                 str(resolve_download_dir(options.dispatcher_download_dir)),
             ]
         )
+    elif options.dispatcher_download_dir:
+        LOG.warning(
+            "%s does not support --dispatcher-download-dir: jobs will write to"
+            " the default directory inside the container, which is not mounted,"
+            " and their artifacts will be unreachable from the host. Rebuild"
+            " the dispatcher image.",
+            image,
+        )
 
     ret.extend(["--http-timeout", str(options.http_timeout)])
     ret.extend(["--ping-interval", str(options.ping_interval)])
