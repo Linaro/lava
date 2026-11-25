@@ -140,11 +140,11 @@ class TestServiceAction(Action):
             "--file",
         ]
 
-        # Use absolute path so it can be stopped from anywhere.
-        self.stop_cmd = cmd_prefix + [
-            f"{self.repo_dir}/{self.parameters['path']}",
-            "down",
-        ]
+        # Use an absolute path so the service can be stopped from anywhere,
+        # and started by compose providers that change directory before
+        # opening the file, such as podman-compose 1.3.0.
+        compose_file = f"{self.repo_dir}/{self.parameters['path']}"
+        self.stop_cmd = cmd_prefix + [compose_file, "down"]
         # For stopping services via command: stop_test_services.
         cmd_list: list[list[str]] | None = self.get_namespace_data(
             action="lava-test-service", label="stop-services", key="cmd-list"
@@ -161,7 +161,7 @@ class TestServiceAction(Action):
             value=cmd_list,
         )
 
-        self.start_cmd = cmd_prefix + [self.parameters["path"], "up", "--detach"]
+        self.start_cmd = cmd_prefix + [compose_file, "up", "--detach"]
         if service := self.parameters.get("service"):
             self.start_cmd.append(service)
 

@@ -153,7 +153,7 @@ class TestTestServiceAction(LavaDispatcherTestCase):
             "--project-name",
             "lava-123-1-1-1-test-service-srv1",
             "--file",
-            "docker-compose.yaml",
+            "/tmp/test-services/srv1/docker-compose.yaml",
             "up",
             "--detach",
             "srv1",
@@ -164,7 +164,7 @@ class TestTestServiceAction(LavaDispatcherTestCase):
             "--project-name",
             "lava-123-1-2-1-test-service-srv2",
             "--file",
-            "docker-compose.yml",
+            "/tmp/test-services/srv2/docker-compose.yml",
             "up",
             "--detach",
         ]
